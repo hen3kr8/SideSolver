@@ -15,8 +15,9 @@ display_images_flag = True
 def build_grid():
     raw_image = read_image()
     thres_image = apply_threshold(raw_image)
-    find_grid(thres_image)
+    grid = find_grid(thres_image)
 
+    corner_2(grid)
     pass
 
 def read_image():
@@ -45,18 +46,11 @@ def blur_image(src_image):
 def apply_threshold(src_image):
 
     # src_image = blur_image(src_image)
-    # Normal threshold
-    # thres_image = cv2.threshold( src_image, 130, 255, 0 )
 
     # adaptive gaussian
     thres_image = cv2.adaptiveThreshold(src_image,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,\
            cv2.THRESH_BINARY_INV,53,1)
     
-    # adaptive mean threshold
-    # thres_image = cv2.adaptiveThreshold(src_image,255,cv2.ADAPTIVE_THRESH_MEAN_C,\
-            # cv2.THRESH_BINARY,11,2)
-    
-        
     if display_images_flag:
         plt.imshow(thres_image, cmap='gray')
         plt.title("thresholded image")        
@@ -65,34 +59,25 @@ def apply_threshold(src_image):
     return thres_image
 
 
-
 def find_grid(image):
     #  apply a blob detecting algorithm. In this case floddfilling.
 
     h, w = image.shape[:2]
     mask = np.zeros((h+2, w+2), np.uint8)
 
-    # flood_fill_image = cv2.floodFill(image, mask, None, (255, 255, 255), 0*3, 0*3, 4)
-
-    # # flood_fill_image = cv2.floodFill(image, (3,3), (0,0))
-    # plt.imshow(flood_fill_image, cmap='gray')
-    # plt.title("floodfill image")
-    # plt.show()    
     new_image = flood_filling(image)
     grid_image = find_biggest_blob(new_image)
 
-    plt.imshow(grid_image, cmap='gray')
-    plt.title("Extracted grid")
-    plt.show()
+    if display_images_flag:
+        plt.imshow(grid_image, cmap='gray')
+        plt.title("Extracted grid")
+        plt.show()
 
-    # final_image = flood_fill(image, new_image, 48, 15, 255, 255)
-    # print(new_image)
-    
-    # if display_images_flag:
-        # plt.imshow(flood_fill_image, cmap='gray')
+    # cv2.imwrite( grid_image,", gray_image );
+    return grid_image
 
 def find_biggest_blob(new_image):
-    #finds the longest continuous set of pixels
+    # finds the longest continuous set of pixels
 
     h,w = new_image.shape
     unique, counts = np.unique(new_image, return_counts=True)
@@ -106,7 +91,7 @@ def find_biggest_blob(new_image):
     return new_image
 
 def flood_filling(image):
-
+    # TODO: fix exception, find better (more efficient) way to apply floodfilling. 
     # returns all islands of pixels, where all islands have different numbers.
 
     h, w = image.shape[:2]
@@ -114,7 +99,6 @@ def flood_filling(image):
     counter = 0
     s = []
 
-    # boarder not included, strictly speaking it should, but if thicker than 1 pixel, it will get picked up
     for i in range(1, h-1):
         for j in range(1,w-1):
             
@@ -132,7 +116,6 @@ def flood_filling(image):
 
                     except IndexError :
                         pass
-                        # print('border : ', x, y, e)
 
     return new_image
 
@@ -141,6 +124,48 @@ def search(i, j, s):
     s.append((i+1,j))
     s.append((i,j+1))
     s.append((i,j-1))
+
+
+
+def corner_detection(image):
+    # ines = cv2.HoughLines(edges,1,np.pi/180,200)
+    pass
+    for rho,theta in lines[0]:
+        a = np.cos(theta)
+        b = np.sin(theta)
+        x0 = a*rho
+        y0 = b*rho
+        x1 = int(x0 + 1000*(-b))
+        y1 = int(y0 + 1000*(a))
+        x2 = int(x0 - 1000*(-b))
+        y2 = int(y0 - 1000*(a))
+
+    cv2.line(img,(x1,y1),(x2,y2),(0,0,255),2)
+
+    cv2.imwrite('houghlines3.jpg',img)
+
+
+
+def invert(image):
+    
+    for i in range(0,image.shape[0]):
+        for j in range(0, image.shape[1]):
+            image[i,j] = int(255 if image[i,j] == 0 else 0)
+
+    return image
+
+def corner_2(image=None):
+
+    #ryy harris corners
+    pass
+    r = cv2.HoughLines(image, 1, np.pi/180, 200)
+    print(r)
+    
+    if display_images_flag:
+        plt.imshow(image, cmap='gray')
+        plt.title("Hough transform")
+        plt.show()
+
     
 
 if __name__ == "__main__":
