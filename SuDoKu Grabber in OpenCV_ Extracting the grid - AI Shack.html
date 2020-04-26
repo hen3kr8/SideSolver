@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<!-- saved from url=(0067)https://aishack.in/tutorials/sudoku-grabber-opencv-extracting-grid/ -->
+<html lang="env"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><style class="darkreader darkreader--fallback" media="screen"></style><style class="darkreader darkreader--text" media="screen"></style><style class="darkreader darkreader--invert" media="screen">.jfk-bubble {
+    filter: invert(100%) hue-rotate(180deg) contrast(90%) !important;
+}</style><style class="darkreader darkreader--inline" media="screen">[data-darkreader-inline-bgcolor] {
+  background-color: var(--darkreader-inline-bgcolor) !important;
+}
+[data-darkreader-inline-bgimage] {
+  background-image: var(--darkreader-inline-bgimage) !important;
+}
+[data-darkreader-inline-border] {
+  border-color: var(--darkreader-inline-border) !important;
+}
+[data-darkreader-inline-border-bottom] {
+  border-bottom-color: var(--darkreader-inline-border-bottom) !important;
+}
+[data-darkreader-inline-border-left] {
+  border-left-color: var(--darkreader-inline-border-left) !important;
+}
+[data-darkreader-inline-border-right] {
+  border-right-color: var(--darkreader-inline-border-right) !important;
+}
+[data-darkreader-inline-border-top] {
+  border-top-color: var(--darkreader-inline-border-top) !important;
+}
+[data-darkreader-inline-boxshadow] {
+  box-shadow: var(--darkreader-inline-boxshadow) !important;
+}
+[data-darkreader-inline-color] {
+  color: var(--darkreader-inline-color) !important;
+}
+[data-darkreader-inline-fill] {
+  fill: var(--darkreader-inline-fill) !important;
+}
+[data-darkreader-inline-stroke] {
+  stroke: var(--darkreader-inline-stroke) !important;
+}
+[data-darkreader-inline-outline] {
+  outline-color: var(--darkreader-inline-outline) !important;
+}</style><style class="darkreader darkreader--user-agent" media="screen">html {
+    background-color: #181a1b !important;
+}
+html, body, input, textarea, select, button {
+    background-color: #181a1b;
+}
+html, body, input, textarea, select, button {
+    border-color: #575757;
+    color: #e8e6e3;
+}
+a {
+    color: #3391ff;
+}
+table {
+    border-color: #4c4c4c;
+}
+::placeholder {
+    color: #bab5ab;
+}
+::selection {
+    background-color: #005ccc;
+    color: #ffffff;
+}
+::-moz-selection {
+    background-color: #005ccc;
+    color: #ffffff;
+}
+input:-webkit-autofill,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+    background-color: #545b00 !important;
+    color: #e8e6e3 !important;
+}
+::-webkit-scrollbar {
+    background-color: #1c1e1f;
+    color: #c5c1b9;
+}
+::-webkit-scrollbar-thumb {
+    background-color: #2a2c2e;
+}
+::-webkit-scrollbar-thumb:hover {
+    background-color: #323537;
+}
+::-webkit-scrollbar-thumb:active {
+    background-color: #3d4043;
+}
+::-webkit-scrollbar-corner {
+    background-color: #181a1b;
+}
+* {
+    scrollbar-color: #2a2c2e #1c1e1f;
+}</style>
+        
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="keywords" content="">
+        <meta name="author" content="Utkarsh Sinha">
+        <link rel="shortcut icon" href="https://aishack.in/static/img/fav.gif">
+        <title>
+             SuDoKu Grabber in OpenCV: Extracting the grid - AI Shack
+        </title>
+        <link rel="stylesheet" href="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/styles.min.css"><style class="darkreader darkreader--sync" media="screen"></style>
+
+        <!-- for use while sharing -->
+        <meta name="title" content="Extracting the grid">
+        <meta name="description" content="">
+        <link rel="image_src" href="http://aishack.in/static/thumb/post-sudoku.jpg">
+        <meta property="og:image:url" content="http://aishack.in/static/thumb/post-sudoku.jpg">
+
+        
+            <iframe id="pxcelframe" src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/t_.html" style="display: none;"></iframe><script src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/sdk.js" async="" crossorigin="anonymous"></script><script async="" src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/get_counts"></script><script async="" src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/analytics.js"></script><script id="facebook-jssdk" src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/sdk(1).js"></script><script id="twitter-wjs" src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/widgets.js"></script><script async="" src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/5993cdcb770096001434eafb.js"></script><script type="text/javascript" src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/sharethis.js" async="async"></script>
+        
+
+        
+
+    <style class="darkreader darkreader--override" media="screen">.vimvixen-hint {
+    background-color: #7b5300 !important;
+    border-color: #d8b013 !important;
+    color: #f3e8c8 !important;
+}
+::placeholder {
+    opacity: 0.5 !important;
+}</style><script src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/embed.js" data-timestamp="1586963311850"></script><link rel="prefetch" as="style" href="https://c.disquscdn.com/next/embed/styles/lounge.048416edcf5aee78d774bdd3019a3423.css"><link rel="prefetch" as="script" href="https://c.disquscdn.com/next/embed/common.bundle.592be4942e5191dd5ec260e2340bdd4b.js"><link rel="prefetch" as="script" href="https://c.disquscdn.com/next/embed/lounge.bundle.62938bb0a8e781333f9fe8d880a4b6bc.js"><link rel="prefetch" as="script" href="https://disqus.com/next/config.js"><style type="text/css">#st-1 {
+  font-family: "Helvetica Neue", Verdana, Helvetica, Arial, sans-serif;;
+  direction: ltr;
+  display: block;
+  opacity: 1;
+  text-align: center;
+  z-index: 94034;
+}
+#st-1.st-animated {
+  -moz-transition: o 0.2s ease-in, p 0.2s ease-in, a 0.2s ease-in, c 0.2s ease-in, i 0.2s ease-in, t 0.2s ease-in, y 0.2s ease-in; -ms-transition: o 0.2s ease-in, p 0.2s ease-in, a 0.2s ease-in, c 0.2s ease-in, i 0.2s ease-in, t 0.2s ease-in, y 0.2s ease-in; -o-transition: o 0.2s ease-in, p 0.2s ease-in, a 0.2s ease-in, c 0.2s ease-in, i 0.2s ease-in, t 0.2s ease-in, y 0.2s ease-in; -webkit-transition: o 0.2s ease-in, p 0.2s ease-in, a 0.2s ease-in, c 0.2s ease-in, i 0.2s ease-in, t 0.2s ease-in, y 0.2s ease-in; transition: o 0.2s ease-in, p 0.2s ease-in, a 0.2s ease-in, c 0.2s ease-in, i 0.2s ease-in, t 0.2s ease-in, y 0.2s ease-in;
+}
+#st-1.st-hidden {
+  opacity: 0;
+}
+#st-1.st-hide {
+  display: none;
+}
+#st-1 .st-btn {
+  -moz-box-sizing: border-box;
+-webkit-box-sizing: border-box;
+box-sizing: border-box;
+  -moz-transition: opacity 0.2s ease-in, top 0.2s ease-in; -ms-transition: opacity 0.2s ease-in, top 0.2s ease-in; -o-transition: opacity 0.2s ease-in, top 0.2s ease-in; -webkit-transition: opacity 0.2s ease-in, top 0.2s ease-in; transition: opacity 0.2s ease-in, top 0.2s ease-in;
+  -moz-border-radius: 0px;
+-webkit-border-radius: 0px;
+border-radius: 0px;
+  border: none;
+  cursor: pointer;
+  display: inline-block;
+  font-size: 11px;
+  height: 32px;
+  line-height: 32px;
+  margin-right: 8px;
+  padding: 0 8px;
+  position: relative;
+  text-align: center;
+  top: 0;
+  vertical-align: top;
+  white-space: nowrap;
+}
+#st-1 .st-btn:last-child {
+  margin-right: 0;
+}
+#st-1 .st-btn > svg {
+  height: 16px;
+  width: 16px;
+  position: relative;
+  top: 8px;
+  vertical-align: top;
+}
+#st-1 .st-btn > img {
+  display: inline-block;
+  height: 16px;
+  width: 16px;
+  position: relative;
+  top: 8px;
+  vertical-align: top;
+}
+#st-1 .st-btn > span {
+  -moz-transition: all 0.2s ease-in; -ms-transition: all 0.2s ease-in; -o-transition: all 0.2s ease-in; -webkit-transition: all 0.2s ease-in; transition: all 0.2s ease-in;
+  color: #fff;
+  display: inline-block;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  min-width: 60px;
+  opacity: 1;
+  padding: 0 6px;
+  position: relative;
+  vertical-align: top;
+}
+#st-1.st-has-labels .st-btn {
+  min-width: 120px;
+}
+#st-1.st-has-labels .st-btn.st-remove-label {
+  min-width: 50px;
+}
+#st-1.st-has-labels .st-btn.st-remove-label > span {
+  display: none;
+}
+#st-1.st-has-labels .st-btn.st-hide-label > span {
+  display: none;
+}
+#st-1 .st-total {
+  color: #555;
+  display: inline-block;
+  font-weight: 500;
+  line-height: 12px;
+  margin-right: 0;
+  max-width: 80px;
+  padding: 4px 8px;
+  text-align: center;
+}
+#st-1 .st-total.st-hidden {
+  display: none;
+}
+#st-1 .st-total > span {
+  font-size: 16px;
+  line-height: 17px;
+  display: block;
+  padding: 0;
+}
+#st-1 .st-total > span.st-shares {
+  font-size: 9px;
+  line-height: 9px;
+}
+#st-1.st-justified {
+  display: flex;
+  text-align: center;
+}
+#st-1.st-justified .st-btn {
+  -moz-flex: 1;
+-ms-flex: 1;
+-webkit-flex: 1;
+flex: 1;
+}#st-1 .st-btn:hover {
+  opacity: .8;
+  top: -4px;
+}#st-1 .st-btn[data-network='facebook'] {
+  background-color: #4267B2;
+}
+#st-1 .st-btn[data-network='facebook'] svg {
+  fill: #fff;
+}
+#st-1 .st-btn[data-network='facebook'] > span {
+  color: #fff;
+}
+#st-1 .st-btn[data-network='twitter'] {
+  background-color: #55acee;
+}
+#st-1 .st-btn[data-network='twitter'] svg {
+  fill: #fff;
+}
+#st-1 .st-btn[data-network='twitter'] > span {
+  color: #fff;
+}
+#st-1 .st-btn[data-network='reddit'] {
+  background-color: #ff4500;
+}
+#st-1 .st-btn[data-network='reddit'] svg {
+  fill: #fff;
+}
+#st-1 .st-btn[data-network='reddit'] > span {
+  color: #fff;
+}
+#st-1 .st-btn[data-network='linkedin'] {
+  background-color: #0077b5;
+}
+#st-1 .st-btn[data-network='linkedin'] svg {
+  fill: #fff;
+}
+#st-1 .st-btn[data-network='linkedin'] > span {
+  color: #fff;
+}
+#st-1 .st-btn[data-network='email'] {
+  background-color: #7d7d7d;
+}
+#st-1 .st-btn[data-network='email'] svg {
+  fill: #fff;
+}
+#st-1 .st-btn[data-network='email'] > span {
+  color: #fff;
+}
+#st-1 .st-btn[data-network='sharethis'] {
+  background-color: #95D03A;
+}
+#st-1 .st-btn[data-network='sharethis'] svg {
+  fill: #fff;
+}
+#st-1 .st-btn[data-network='sharethis'] > span {
+  color: #fff;
+}</style><style class="darkreader darkreader--sync" media="screen"></style><script charset="utf-8" src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/button.93a0c25c2d2f3081c705c98c2d9dec0e.js"></script><style type="text/css">.fb_hidden{position:absolute;top:-10000px;z-index:10001}.fb_reposition{overflow:hidden;position:relative}.fb_invisible{display:none}.fb_reset{background:none;border:0;border-spacing:0;color:#000;cursor:auto;direction:ltr;font-family:"lucida grande", tahoma, verdana, arial, sans-serif;font-size:11px;font-style:normal;font-variant:normal;font-weight:normal;letter-spacing:normal;line-height:1;margin:0;overflow:visible;padding:0;text-align:left;text-decoration:none;text-indent:0;text-shadow:none;text-transform:none;visibility:visible;white-space:normal;word-spacing:normal}.fb_reset>div{overflow:hidden}@keyframes fb_transform{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}.fb_animate{animation:fb_transform .3s forwards}
+.fb_dialog{background:rgba(82, 82, 82, .7);position:absolute;top:-10000px;z-index:10001}.fb_dialog_advanced{border-radius:8px;padding:10px}.fb_dialog_content{background:#fff;color:#373737}.fb_dialog_close_icon{background:url(https://static.xx.fbcdn.net/rsrc.php/v3/yq/r/IE9JII6Z1Ys.png) no-repeat scroll 0 0 transparent;cursor:pointer;display:block;height:15px;position:absolute;right:18px;top:17px;width:15px}.fb_dialog_mobile .fb_dialog_close_icon{left:5px;right:auto;top:5px}.fb_dialog_padding{background-color:transparent;position:absolute;width:1px;z-index:-1}.fb_dialog_close_icon:hover{background:url(https://static.xx.fbcdn.net/rsrc.php/v3/yq/r/IE9JII6Z1Ys.png) no-repeat scroll 0 -15px transparent}.fb_dialog_close_icon:active{background:url(https://static.xx.fbcdn.net/rsrc.php/v3/yq/r/IE9JII6Z1Ys.png) no-repeat scroll 0 -30px transparent}.fb_dialog_iframe{line-height:0}.fb_dialog_content .dialog_title{background:#6d84b4;border:1px solid #365899;color:#fff;font-size:14px;font-weight:bold;margin:0}.fb_dialog_content .dialog_title>span{background:url(https://static.xx.fbcdn.net/rsrc.php/v3/yd/r/Cou7n-nqK52.gif) no-repeat 5px 50%;float:left;padding:5px 0 7px 26px}body.fb_hidden{height:100%;left:0;margin:0;overflow:visible;position:absolute;top:-10000px;transform:none;width:100%}.fb_dialog.fb_dialog_mobile.loading{background:url(https://static.xx.fbcdn.net/rsrc.php/v3/ya/r/3rhSv5V8j3o.gif) white no-repeat 50% 50%;min-height:100%;min-width:100%;overflow:hidden;position:absolute;top:0;z-index:10001}.fb_dialog.fb_dialog_mobile.loading.centered{background:none;height:auto;min-height:initial;min-width:initial;width:auto}.fb_dialog.fb_dialog_mobile.loading.centered #fb_dialog_loader_spinner{width:100%}.fb_dialog.fb_dialog_mobile.loading.centered .fb_dialog_content{background:none}.loading.centered #fb_dialog_loader_close{clear:both;color:#fff;display:block;font-size:18px;padding-top:20px}#fb-root #fb_dialog_ipad_overlay{background:rgba(0, 0, 0, .4);bottom:0;left:0;min-height:100%;position:absolute;right:0;top:0;width:100%;z-index:10000}#fb-root #fb_dialog_ipad_overlay.hidden{display:none}.fb_dialog.fb_dialog_mobile.loading iframe{visibility:hidden}.fb_dialog_mobile .fb_dialog_iframe{position:sticky;top:0}.fb_dialog_content .dialog_header{background:linear-gradient(from(#738aba), to(#2c4987));border-bottom:1px solid;border-color:#043b87;box-shadow:white 0 1px 1px -1px inset;color:#fff;font:bold 14px Helvetica, sans-serif;text-overflow:ellipsis;text-shadow:rgba(0, 30, 84, .296875) 0 -1px 0;vertical-align:middle;white-space:nowrap}.fb_dialog_content .dialog_header table{height:43px;width:100%}.fb_dialog_content .dialog_header td.header_left{font-size:12px;padding-left:5px;vertical-align:middle;width:60px}.fb_dialog_content .dialog_header td.header_right{font-size:12px;padding-right:5px;vertical-align:middle;width:60px}.fb_dialog_content .touchable_button{background:linear-gradient(from(#4267B2), to(#2a4887));background-clip:padding-box;border:1px solid #29487d;border-radius:3px;display:inline-block;line-height:18px;margin-top:3px;max-width:85px;padding:4px 12px;position:relative}.fb_dialog_content .dialog_header .touchable_button input{background:none;border:none;color:#fff;font:bold 12px Helvetica, sans-serif;margin:2px -12px;padding:2px 6px 3px 6px;text-shadow:rgba(0, 30, 84, .296875) 0 -1px 0}.fb_dialog_content .dialog_header .header_center{color:#fff;font-size:16px;font-weight:bold;line-height:18px;text-align:center;vertical-align:middle}.fb_dialog_content .dialog_content{background:url(https://static.xx.fbcdn.net/rsrc.php/v3/y9/r/jKEcVPZFk-2.gif) no-repeat 50% 50%;border:1px solid #4a4a4a;border-bottom:0;border-top:0;height:150px}.fb_dialog_content .dialog_footer{background:#f5f6f7;border:1px solid #4a4a4a;border-top-color:#ccc;height:40px}#fb_dialog_loader_close{float:left}.fb_dialog.fb_dialog_mobile .fb_dialog_close_button{text-shadow:rgba(0, 30, 84, .296875) 0 -1px 0}.fb_dialog.fb_dialog_mobile .fb_dialog_close_icon{visibility:hidden}#fb_dialog_loader_spinner{animation:rotateSpinner 1.2s linear infinite;background-color:transparent;background-image:url(https://static.xx.fbcdn.net/rsrc.php/v3/yD/r/t-wz8gw1xG1.png);background-position:50% 50%;background-repeat:no-repeat;height:24px;width:24px}@keyframes rotateSpinner{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+.fb_iframe_widget{display:inline-block;position:relative}.fb_iframe_widget span{display:inline-block;position:relative;text-align:justify}.fb_iframe_widget iframe{position:absolute}.fb_iframe_widget_fluid_desktop,.fb_iframe_widget_fluid_desktop span,.fb_iframe_widget_fluid_desktop iframe{max-width:100%}.fb_iframe_widget_fluid_desktop iframe{min-width:220px;position:relative}.fb_iframe_widget_lift{z-index:1}.fb_iframe_widget_fluid{display:inline}.fb_iframe_widget_fluid span{width:100%}</style><style class="darkreader darkreader--sync" media="screen"></style><script src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/alfie.f51946af45e0b561c60f768335c9eb79.js" async="" charset="UTF-8"></script></head>
+    <body>
+        <div class="container-fluid header-top">
+            <nav class="navbar navbar-default" role="navigation">
+                <div class="container">
+                    
+
+  <div class="container-fluid">
+    <!-- Brand and toggle get grouped for better mobile display -->
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="https://aishack.in/"><span class="pull-left site-logo"></span> <strong>AI Shack</strong></a>
+    </div>
+
+    <!-- Collect the nav links, forms, and other content for toggling -->
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+
+      <ul class="nav navbar-nav navbar-right">
+       <li><a href="https://aishack.in/"><span class="glyphicon glyphicon-home"></span></a></li>
+        <!--li ><a class='nav-start-here' href="/start-here">Start here</a></li-->
+        <li class="active"><a href="https://aishack.in/tutorials/"><span class="glyphicon glyphicon-th glyphicon-margin"></span>Tutorials</a></li>
+        
+        
+        <li><a href="https://aishack.in/about/">About</a></li>
+        <li>
+            <form class="form-inline form-search" role="form" method="get" action="https://aishack.in/search">
+                <div class="form-group has-feedback">
+                    <input placeholder="Search" type="text" class="form-control" name="q" id="q">
+                    <span class="glyphicon glyphicon-search form-control-feedback"></span>
+                </div>
+            </form>
+        </li>
+      </ul>
+
+    </div><!-- /.navbar-collapse -->
+  </div><!-- /.container-fluid -->
+
+                </div>
+            </nav>
+        </div>
+        <div class="container pad-bottom">
+
+            <div class="row">
+                
+                    <div class="col-md-12">
+                
+
+                
+                    <ol class="breadcrumb">
+    <li><a href="https://aishack.in/"><span class="glyphicon glyphicon-home"></span></a></li>
+    
+        <li><a href="https://aishack.in/tutorials/">Tutorials</a></li>
+        
+            <li><a href="https://aishack.in/category/projects/">Projects</a></li>
+        
+        
+            
+                <li><a href="https://aishack.in/tutorials/sudoku-grabber-opencv-detection">SuDoKu Grabber in OpenCV</a></li>
+            
+            <li><a href="https://aishack.in/tutorials/sudoku-grabber-opencv-extracting-grid/">Extracting the grid</a></li>
+        
+    
+    
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</ol>
+
+                    
+                    
+    
+        
+            <img class="tut-post-image img-responsive" src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/post-sudoku.jpg">
+        
+           <div class="fb-like fb_iframe_widget" data-href="http://facebook.com/aishack" data-adapt-container-width="true" data-layout="standard" data-action="like" data-show-faces="true" fb-xfbml-state="rendered" fb-iframe-plugin-query="action=like&amp;app_id=&amp;container_width=770&amp;href=http%3A%2F%2Ffacebook.com%2Faishack&amp;layout=standard&amp;locale=en_US&amp;sdk=joey&amp;show_faces=true"><span style="vertical-align: bottom; width: 450px; height: 20px;"><iframe name="f18c48c705b4db" width="1000px" height="1000px" data-testid="fb:like Facebook Social Plugin" title="fb:like Facebook Social Plugin" frameborder="0" allowtransparency="true" allowfullscreen="true" scrolling="no" allow="encrypted-media" src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/like.html" style="border: none; visibility: visible; --darkreader-inline-border-top: initial; --darkreader-inline-border-right: initial; --darkreader-inline-border-bottom: initial; --darkreader-inline-border-left: initial; width: 450px; height: 20px;" data-darkreader-inline-border-top="" data-darkreader-inline-border-right="" data-darkreader-inline-border-bottom="" data-darkreader-inline-border-left="" class=""></iframe></span></div> 
+        <hr>
+
+        
+            <h2>SuDoKu Grabber in OpenCV</h2>
+            <p><emph></emph></p>
+            <hr>
+        
+            <h2>Extracting the grid</h2>
+            
+                <div class="pull-right series-box-top">
+                    <p><strong>Series</strong>: SuDoKu Grabber in OpenCV:</p>
+                    <ol>
+                        
+                            <li>
+                                
+                                    <a href="https://aishack.in/tutorials/sudoku-grabber-opencv-plot/">The Plot</a>
+                                
+                            </li>
+                        
+                            <li>
+                                
+                                    <a href="https://aishack.in/tutorials/sudoku-grabber-opencv-detection/">Grid detection</a>
+                                
+                            </li>
+                        
+                            <li>
+                                
+                                    <strong>Extracting the grid</strong>
+                                
+                            </li>
+                        
+                            <li>
+                                
+                                    <a href="https://aishack.in/tutorials/sudoku-grabber-opencv-extracting-digits/">Extracting digits</a>
+                                
+                            </li>
+                        
+                            <li>
+                                
+                                    <a href="https://aishack.in/tutorials/sudoku-grabber-opencv-recognizing-digits/">Recognizing digits</a>
+                                
+                            </li>
+                        
+                    </ol>
+                </div>
+            
+
+
+
+        <div class="tutorial-content">
+            <style scoped="">img.latex-inline { vertical-align: middle; }</style><style class="darkreader darkreader--sync" media="screen"></style>
+<p>In <a href="https://aishack.in/tutorials/sudoku-grabber-opencv-detection/">the last post</a>, we had found some lines. But the numerous lines were not good enough for detecting the location of the puzzle. So we'll do some math today and find out exactly where the puzzle is. We'll also un-distort the puzzle so we have a perfect top-down view of the sudoku puzzle. </p>
+<h2>Merging lines</h2>
+<p>Each physical line on the image has several "mathematical" lines associated with it. This is because of its One way to fix this is to "merge" lines that are close by.</p>
+<figure><img alt="Lines detected by the hough transform" src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/sudoku-possible-lines.jpg">  <figcaption>
+<p>Lines detected by the Hough transform  </p>
+</figcaption>
+</figure>
+<p>By merging lines I mean averaging nearby lines. So lines that are within a certain distance will "fuse" together.</p>
+<p>We'll write another function to fuse lines together.&nbsp; Start off by: </p>
+<div class="codehilite"><pre><span class="kt">void</span> <span class="nf">mergeRelatedLines</span><span class="p">(</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">Vec2f</span><span class="o">&gt;</span> <span class="o">*</span><span class="n">lines</span><span class="p">,</span> <span class="n">Mat</span> <span class="o">&amp;</span><span class="n">img</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">vector</span><span class="o">&lt;</span><span class="n">Vec2f</span><span class="o">&gt;::</span><span class="n">iterator</span> <span class="n">current</span><span class="p">;</span>
+    <span class="k">for</span><span class="p">(</span><span class="n">current</span><span class="o">=</span><span class="n">lines</span><span class="o">-&gt;</span><span class="n">begin</span><span class="p">();</span><span class="n">current</span><span class="o">!=</span><span class="n">lines</span><span class="o">-&gt;</span><span class="n">end</span><span class="p">();</span><span class="n">current</span><span class="o">++</span><span class="p">)</span>
+    <span class="p">{</span>
+</pre></div>
+
+
+<p>The iterator helps traverse the array list. Each element of the list contains 2 things: rho and theta (the <a href="https://aishack.in/tutorials/converting-lines-normal-slopeintercept-form/">normal form</a> of a line).</p>
+<p>During the merging process, certain lines will fuse together. So, we'll need to mark lines that have been fused (so they aren't considered for other things). This is done by setting the rho to zero and theta to -100 (an impossible value). So whenever we encounter such a line, we simply skip it: </p>
+<div class="codehilite"><pre><span class="k">if</span><span class="p">((</span><span class="o">*</span><span class="n">current</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="o">*</span><span class="n">current</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">==-</span><span class="mi">100</span><span class="p">)</span> <span class="k">continue</span><span class="p">;</span>
+</pre></div>
+
+
+<p>Now, we store the rho and theta for the current line in two variables: </p>
+<div class="codehilite"><pre>        <span class="kt">float</span> <span class="n">p1</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">current</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
+        <span class="kt">float</span> <span class="n">theta1</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">current</span><span class="p">)[</span><span class="mi">1</span><span class="p">];</span>
+</pre></div>
+
+
+<p>With these two values, we find two points on the line:; </p>
+<div class="codehilite"><pre>        <span class="n">Point</span> <span class="n">pt1current</span><span class="p">,</span> <span class="n">pt2current</span><span class="p">;</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">theta1</span><span class="o">&gt;</span><span class="n">CV_PI</span><span class="o">*</span><span class="mi">45</span><span class="o">/</span><span class="mi">180</span> <span class="o">&amp;&amp;</span> <span class="n">theta1</span><span class="o">&lt;</span><span class="n">CV_PI</span><span class="o">*</span><span class="mi">135</span><span class="o">/</span><span class="mi">180</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">pt1current</span><span class="p">.</span><span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+
+            <span class="n">pt1current</span><span class="p">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">p1</span><span class="o">/</span><span class="n">sin</span><span class="p">(</span><span class="n">theta1</span><span class="p">);</span>
+
+            <span class="n">pt2current</span><span class="p">.</span><span class="n">x</span><span class="o">=</span><span class="n">img</span><span class="p">.</span><span class="n">size</span><span class="p">().</span><span class="n">width</span><span class="p">;</span>
+            <span class="n">pt2current</span><span class="p">.</span><span class="n">y</span><span class="o">=-</span><span class="n">pt2current</span><span class="p">.</span><span class="n">x</span><span class="o">/</span><span class="n">tan</span><span class="p">(</span><span class="n">theta1</span><span class="p">)</span> <span class="o">+</span> <span class="n">p1</span><span class="o">/</span><span class="n">sin</span><span class="p">(</span><span class="n">theta1</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="k">else</span>
+        <span class="p">{</span>
+            <span class="n">pt1current</span><span class="p">.</span><span class="n">y</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+
+            <span class="n">pt1current</span><span class="p">.</span><span class="n">x</span><span class="o">=</span><span class="n">p1</span><span class="o">/</span><span class="n">cos</span><span class="p">(</span><span class="n">theta1</span><span class="p">);</span>
+
+            <span class="n">pt2current</span><span class="p">.</span><span class="n">y</span><span class="o">=</span><span class="n">img</span><span class="p">.</span><span class="n">size</span><span class="p">().</span><span class="n">height</span><span class="p">;</span>
+            <span class="n">pt2current</span><span class="p">.</span><span class="n">x</span><span class="o">=-</span><span class="n">pt2current</span><span class="p">.</span><span class="n">y</span><span class="o">/</span><span class="n">tan</span><span class="p">(</span><span class="n">theta1</span><span class="p">)</span> <span class="o">+</span> <span class="n">p1</span><span class="o">/</span><span class="n">cos</span><span class="p">(</span><span class="n">theta1</span><span class="p">);</span>
+
+        <span class="p">}</span>
+</pre></div>
+
+
+<p>If the is horizontal (theta is around 90 degrees), we find a point at the extreme left (x=0) and one at the extreme right (x=img.width). If not, we find a point at the extreme top (y=0) and one at extreme bottom (y=img.height).</p>
+<p>All the calculations are done based on the <a href="https://aishack.in/tutorials/converting-lines-normal-slopeintercept-form/">normal form</a> of a line.</p>
+<p>Next, we start iterating over the lines again: </p>
+<div class="codehilite"><pre>        <span class="n">vector</span><span class="o">&lt;</span><span class="n">Vec2f</span><span class="o">&gt;::</span><span class="n">iterator</span>&nbsp;&nbsp; &nbsp;<span class="n">pos</span><span class="p">;</span>
+        <span class="k">for</span><span class="p">(</span><span class="n">pos</span><span class="o">=</span><span class="n">lines</span><span class="o">-&gt;</span><span class="n">begin</span><span class="p">();</span><span class="n">pos</span><span class="o">!=</span><span class="n">lines</span><span class="o">-&gt;</span><span class="n">end</span><span class="p">();</span><span class="n">pos</span><span class="o">++</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span><span class="p">(</span><span class="o">*</span><span class="n">current</span><span class="o">==*</span><span class="n">pos</span><span class="p">)</span> <span class="k">continue</span><span class="p">;</span>
+</pre></div>
+
+
+<p>With this loop, we can compare every line with every other line. If we find that the line <em>current</em> is the same as the line <em>pos</em>, we continue. No point fusing the same line.</p>
+<p>Now we check if the lines are within a certain distance of each other: </p>
+<div class="codehilite"><pre>            <span class="k">if</span><span class="p">(</span><span class="n">fabs</span><span class="p">((</span><span class="o">*</span><span class="n">pos</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="p">(</span><span class="o">*</span><span class="n">current</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span><span class="o">&lt;</span><span class="mi">20</span> <span class="o">&amp;&amp;</span> <span class="n">fabs</span><span class="p">((</span><span class="o">*</span><span class="n">pos</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="p">(</span><span class="o">*</span><span class="n">current</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span><span class="o">&lt;</span><span class="n">CV_PI</span><span class="o">*</span><span class="mi">10</span><span class="o">/</span><span class="mi">180</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="kt">float</span> <span class="n">p</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">pos</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
+                <span class="kt">float</span> <span class="n">theta</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">pos</span><span class="p">)[</span><span class="mi">1</span><span class="p">];</span>
+</pre></div>
+
+
+<p>If they are, we store the rho and theta for the line <em>pos</em>.</p>
+<p>And again, we find two points on the line <em>pos</em>: </p>
+<div class="codehilite"><pre>                <span class="n">Point</span> <span class="n">pt1</span><span class="p">,</span> <span class="n">pt2</span><span class="p">;</span>
+                <span class="k">if</span><span class="p">((</span><span class="o">*</span><span class="n">pos</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">&gt;</span><span class="n">CV_PI</span><span class="o">*</span><span class="mi">45</span><span class="o">/</span><span class="mi">180</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="o">*</span><span class="n">pos</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">&lt;</span><span class="n">CV_PI</span><span class="o">*</span><span class="mi">135</span><span class="o">/</span><span class="mi">180</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">pt1</span><span class="p">.</span><span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+                    <span class="n">pt1</span><span class="p">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">p</span><span class="o">/</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">);</span>
+                    <span class="n">pt2</span><span class="p">.</span><span class="n">x</span><span class="o">=</span><span class="n">img</span><span class="p">.</span><span class="n">size</span><span class="p">().</span><span class="n">width</span><span class="p">;</span>
+                    <span class="n">pt2</span><span class="p">.</span><span class="n">y</span><span class="o">=-</span><span class="n">pt2</span><span class="p">.</span><span class="n">x</span><span class="o">/</span><span class="n">tan</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">+</span> <span class="n">p</span><span class="o">/</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">);</span>
+                <span class="p">}</span>
+                <span class="k">else</span>
+                <span class="p">{</span>
+                    <span class="n">pt1</span><span class="p">.</span><span class="n">y</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+                    <span class="n">pt1</span><span class="p">.</span><span class="n">x</span><span class="o">=</span><span class="n">p</span><span class="o">/</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">);</span>
+                    <span class="n">pt2</span><span class="p">.</span><span class="n">y</span><span class="o">=</span><span class="n">img</span><span class="p">.</span><span class="n">size</span><span class="p">().</span><span class="n">height</span><span class="p">;</span>
+                    <span class="n">pt2</span><span class="p">.</span><span class="n">x</span><span class="o">=-</span><span class="n">pt2</span><span class="p">.</span><span class="n">y</span><span class="o">/</span><span class="n">tan</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">+</span> <span class="n">p</span><span class="o">/</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">);</span>
+                <span class="p">}</span>
+</pre></div>
+
+
+<p>Now if endpoints of the line <em>pos</em> and the line <em>current</em> are close to each other, we fuse them: </p>
+<div class="codehilite"><pre>                <span class="k">if</span><span class="p">(((</span><span class="kt">double</span><span class="p">)(</span><span class="n">pt1</span><span class="p">.</span><span class="n">x</span><span class="o">-</span><span class="n">pt1current</span><span class="p">.</span><span class="n">x</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">pt1</span><span class="p">.</span><span class="n">x</span><span class="o">-</span><span class="n">pt1current</span><span class="p">.</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">pt1</span><span class="p">.</span><span class="n">y</span><span class="o">-</span><span class="n">pt1current</span><span class="p">.</span><span class="n">y</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">pt1</span><span class="p">.</span><span class="n">y</span><span class="o">-</span><span class="n">pt1current</span><span class="p">.</span><span class="n">y</span><span class="p">)</span><span class="o">&lt;</span><span class="mi">64</span><span class="o">*</span><span class="mi">64</span><span class="p">)</span> <span class="o">&amp;&amp;</span>
+<span class="p">((</span><span class="kt">double</span><span class="p">)(</span><span class="n">pt2</span><span class="p">.</span><span class="n">x</span><span class="o">-</span><span class="n">pt2current</span><span class="p">.</span><span class="n">x</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">pt2</span><span class="p">.</span><span class="n">x</span><span class="o">-</span><span class="n">pt2current</span><span class="p">.</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">pt2</span><span class="p">.</span><span class="n">y</span><span class="o">-</span><span class="n">pt2current</span><span class="p">.</span><span class="n">y</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">pt2</span><span class="p">.</span><span class="n">y</span><span class="o">-</span><span class="n">pt2current</span><span class="p">.</span><span class="n">y</span><span class="p">)</span><span class="o">&lt;</span><span class="mi">64</span><span class="o">*</span><span class="mi">64</span><span class="p">))</span>
+                <span class="p">{</span>
+                    <span class="c1">// Merge the two</span>
+                    <span class="p">(</span><span class="o">*</span><span class="n">current</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="o">*</span><span class="n">current</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="p">(</span><span class="o">*</span><span class="n">pos</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span><span class="o">/</span><span class="mi">2</span><span class="p">;</span>
+
+                    <span class="p">(</span><span class="o">*</span><span class="n">current</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="o">*</span><span class="n">current</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="p">(</span><span class="o">*</span><span class="n">pos</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span><span class="o">/</span><span class="mi">2</span><span class="p">;</span>
+
+                    <span class="p">(</span><span class="o">*</span><span class="n">pos</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+                    <span class="p">(</span><span class="o">*</span><span class="n">pos</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">=-</span><span class="mi">100</span><span class="p">;</span>
+                <span class="p">}</span>
+</pre></div>
+
+
+<p>That's all there is to fusing lines: </p>
+<div class="codehilite"><pre>            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>Now you can add a call to this function after the Hough transform: </p>
+<div class="codehilite"><pre>    <span class="n">vector</span><span class="o">&lt;</span><span class="n">Vec2f</span><span class="o">&gt;</span> <span class="n">lines</span><span class="p">;</span>
+
+    <span class="n">HoughLines</span><span class="p">(</span><span class="n">outerBox</span><span class="p">,</span> <span class="n">lines</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">CV_PI</span><span class="o">/</span><span class="mi">180</span><span class="p">,</span> <span class="mi">200</span><span class="p">);</span>
+
+    <span class="n">mergeRelatedLines</span><span class="p">(</span><span class="o">&amp;</span><span class="n">lines</span><span class="p">,</span> <span class="n">sudoku</span><span class="p">);</span> <span class="c1">// Add this line</span>
+</pre></div>
+
+
+<p>And thus, we'll have merged neighbouring lines.</p>
+<figure><img alt="Merged lines!" src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/sudoku-merged-lines.jpg">  <figcaption>
+<p>Merged lines!  </p>
+</figcaption>
+</figure>
+<h2>Finding extreme lines</h2>
+<p>Now we'll try and detect lines that are nearest to the top edge, bottom edge, right edge and the left edge. These will be the outer boundaries of the sudoku puzzle. We start by adding these lines after the mergeRelatedLines call: </p>
+<div class="codehilite"><pre>&nbsp;&nbsp;&nbsp; <span class="c1">// Now detect the lines on extremes</span>
+&nbsp;&nbsp;&nbsp; <span class="n">Vec2f</span> <span class="n">topEdge</span> <span class="o">=</span> <span class="n">Vec2f</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span><span class="mi">1000</span><span class="p">);</span>&nbsp;&nbsp; &nbsp;<span class="kt">double</span> <span class="n">topYIntercept</span><span class="o">=</span><span class="mi">100000</span><span class="p">,</span> <span class="n">topXIntercept</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+&nbsp;&nbsp;&nbsp; <span class="n">Vec2f</span> <span class="n">bottomEdge</span> <span class="o">=</span> <span class="n">Vec2f</span><span class="p">(</span><span class="o">-</span><span class="mi">1000</span><span class="p">,</span><span class="o">-</span><span class="mi">1000</span><span class="p">);</span>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<span class="kt">double</span> <span class="n">bottomYIntercept</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">bottomXIntercept</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+&nbsp;&nbsp;&nbsp; <span class="n">Vec2f</span> <span class="n">leftEdge</span> <span class="o">=</span> <span class="n">Vec2f</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span><span class="mi">1000</span><span class="p">);</span>&nbsp;&nbsp; &nbsp;<span class="kt">double</span> <span class="n">leftXIntercept</span><span class="o">=</span><span class="mi">100000</span><span class="p">,</span> <span class="n">leftYIntercept</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+&nbsp;&nbsp;&nbsp; <span class="n">Vec2f</span> <span class="n">rightEdge</span> <span class="o">=</span> <span class="n">Vec2f</span><span class="p">(</span><span class="o">-</span><span class="mi">1000</span><span class="p">,</span><span class="o">-</span><span class="mi">1000</span><span class="p">);</span>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<span class="kt">double</span> <span class="n">rightXIntercept</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">rightYIntercept</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+</pre></div>
+
+
+<p>The initial values of each edge is initially set to a ridiculous value. This will ensure it gets to the proper edge later on. Now we loop over all lines: </p>
+<div class="codehilite"><pre>&nbsp;&nbsp;&nbsp; <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">lines</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="n">i</span><span class="o">++</span><span class="p">)</span>
+&nbsp;&nbsp;&nbsp; <span class="p">{</span>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="n">Vec2f</span> <span class="n">current</span> <span class="o">=</span> <span class="n">lines</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="kt">float</span> <span class="n">p</span><span class="o">=</span><span class="n">current</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="kt">float</span> <span class="n">theta</span><span class="o">=</span><span class="n">current</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="k">if</span><span class="p">(</span><span class="n">p</span><span class="o">==</span><span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">theta</span><span class="o">==-</span><span class="mi">100</span><span class="p">)</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="k">continue</span><span class="p">;</span>
+</pre></div>
+
+
+<p>We store the rho and theta values. If we encounter a "merged" line, we simply skip it. Now we use the <a href="https://aishack.in/tutorials/converting-lines-normal-slopeintercept-form/">normal form</a> of line to calculate the x and y intercepts (the place where the lines intersects the X and Y axis) </p>
+<div class="codehilite"><pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="kt">double</span> <span class="n">xIntercept</span><span class="p">,</span> <span class="n">yIntercept</span><span class="p">;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="n">xIntercept</span> <span class="o">=</span> <span class="n">p</span><span class="o">/</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">);</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="n">yIntercept</span> <span class="o">=</span> <span class="n">p</span><span class="o">/</span><span class="p">(</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">));</span>
+</pre></div>
+
+
+<p>If the line is nearly vertical: </p>
+<div class="codehilite"><pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="k">if</span><span class="p">(</span><span class="n">theta</span><span class="o">&gt;</span><span class="n">CV_PI</span><span class="o">*</span><span class="mi">80</span><span class="o">/</span><span class="mi">180</span> <span class="o">&amp;&amp;</span> <span class="n">theta</span><span class="o">&lt;</span><span class="n">CV_PI</span><span class="o">*</span><span class="mi">100</span><span class="o">/</span><span class="mi">180</span><span class="p">)</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="p">{</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="k">if</span><span class="p">(</span><span class="n">p</span><span class="o">&lt;</span><span class="n">topEdge</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="n">topEdge</span> <span class="o">=</span> <span class="n">current</span><span class="p">;</span>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="k">if</span><span class="p">(</span><span class="n">p</span><span class="o">&gt;</span><span class="n">bottomEdge</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="n">bottomEdge</span> <span class="o">=</span> <span class="n">current</span><span class="p">;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="p">}</span>
+</pre></div>
+
+
+<p>Otherwise, if they are nearly horizontal, </p>
+<div class="codehilite"><pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="k">else</span> <span class="nf">if</span><span class="p">(</span><span class="n">theta</span><span class="o">&lt;</span><span class="n">CV_PI</span><span class="o">*</span><span class="mi">10</span><span class="o">/</span><span class="mi">180</span> <span class="o">||</span> <span class="n">theta</span><span class="o">&gt;</span><span class="n">CV_PI</span><span class="o">*</span><span class="mi">170</span><span class="o">/</span><span class="mi">180</span><span class="p">)</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="p">{</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="k">if</span><span class="p">(</span><span class="n">xIntercept</span><span class="o">&gt;</span><span class="n">rightXIntercept</span><span class="p">)</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="p">{</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="n">rightEdge</span> <span class="o">=</span> <span class="n">current</span><span class="p">;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="n">rightXIntercept</span> <span class="o">=</span> <span class="n">xIntercept</span><span class="p">;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="p">}</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="k">else</span> <span class="k">if</span><span class="p">(</span><span class="n">xIntercept</span><span class="o">&lt;=</span><span class="n">leftXIntercept</span><span class="p">)</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="p">{</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="n">leftEdge</span> <span class="o">=</span> <span class="n">current</span><span class="p">;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="n">leftXIntercept</span> <span class="o">=</span> <span class="n">xIntercept</span><span class="p">;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="p">}</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="p">}</span>
+&nbsp;&nbsp;&nbsp; <span class="p">}</span>
+</pre></div>
+
+
+<p>We've ignored any lines that have slopes at other angles. And this also ends the loop. Now, at the end of this loop, we'll have the extreme lines. Just for visualizing it, we'll draw those lines on the original image: </p>
+<div class="codehilite"><pre>&nbsp;&nbsp;&nbsp; <span class="n">drawLine</span><span class="p">(</span><span class="n">topEdge</span><span class="p">,</span> <span class="n">sudoku</span><span class="p">,</span> <span class="n">CV_RGB</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">));</span>
+&nbsp;&nbsp;&nbsp; <span class="n">drawLine</span><span class="p">(</span><span class="n">bottomEdge</span><span class="p">,</span> <span class="n">sudoku</span><span class="p">,</span> <span class="n">CV_RGB</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">));</span>
+&nbsp;&nbsp;&nbsp; <span class="n">drawLine</span><span class="p">(</span><span class="n">leftEdge</span><span class="p">,</span> <span class="n">sudoku</span><span class="p">,</span> <span class="n">CV_RGB</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">));</span>
+&nbsp;&nbsp;&nbsp; <span class="n">drawLine</span><span class="p">(</span><span class="n">rightEdge</span><span class="p">,</span> <span class="n">sudoku</span><span class="p">,</span> <span class="n">CV_RGB</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">));</span>
+</pre></div>
+
+
+<p>Next, we'll <a href="https://aishack.in/tutorials/solving-intersection-lines-efficiently/">calculate the intersections</a> of these four lines. First, we find two points on each line. Then using some math, we can calculate exactly where any two particular lines intersect:</p>
+<div class="codehilite"><pre>&nbsp;&nbsp;&nbsp; <span class="n">Point</span> <span class="n">left1</span><span class="p">,</span> <span class="n">left2</span><span class="p">,</span> <span class="n">right1</span><span class="p">,</span> <span class="n">right2</span><span class="p">,</span> <span class="n">bottom1</span><span class="p">,</span> <span class="n">bottom2</span><span class="p">,</span> <span class="n">top1</span><span class="p">,</span> <span class="n">top2</span><span class="p">;</span>
+
+&nbsp;&nbsp;&nbsp; <span class="kt">int</span> <span class="n">height</span><span class="o">=</span><span class="n">outerBox</span><span class="p">.</span><span class="n">size</span><span class="p">().</span><span class="n">height</span><span class="p">;</span>
+
+&nbsp;&nbsp;&nbsp; <span class="kt">int</span> <span class="n">width</span><span class="o">=</span><span class="n">outerBox</span><span class="p">.</span><span class="n">size</span><span class="p">().</span><span class="n">width</span><span class="p">;</span>
+
+&nbsp;&nbsp;&nbsp; <span class="k">if</span><span class="p">(</span><span class="n">leftEdge</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">!=</span><span class="mi">0</span><span class="p">)</span>
+&nbsp;&nbsp;&nbsp; <span class="p">{</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="n">left1</span><span class="p">.</span><span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<span class="n">left1</span><span class="p">.</span><span class="n">y</span><span class="o">=</span><span class="n">leftEdge</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="n">sin</span><span class="p">(</span><span class="n">leftEdge</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="n">left2</span><span class="p">.</span><span class="n">x</span><span class="o">=</span><span class="n">width</span><span class="p">;</span>&nbsp;&nbsp; &nbsp;<span class="n">left2</span><span class="p">.</span><span class="n">y</span><span class="o">=-</span><span class="n">left2</span><span class="p">.</span><span class="n">x</span><span class="o">/</span><span class="n">tan</span><span class="p">(</span><span class="n">leftEdge</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="n">left1</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+&nbsp;&nbsp;&nbsp; <span class="p">}</span>
+&nbsp;&nbsp;&nbsp; <span class="k">else</span>
+&nbsp;&nbsp;&nbsp; <span class="p">{</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="n">left1</span><span class="p">.</span><span class="n">y</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<span class="n">left1</span><span class="p">.</span><span class="n">x</span><span class="o">=</span><span class="n">leftEdge</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="n">cos</span><span class="p">(</span><span class="n">leftEdge</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="n">left2</span><span class="p">.</span><span class="n">y</span><span class="o">=</span><span class="n">height</span><span class="p">;</span>&nbsp;&nbsp; &nbsp;<span class="n">left2</span><span class="p">.</span><span class="n">x</span><span class="o">=</span><span class="n">left1</span><span class="p">.</span><span class="n">x</span> <span class="o">-</span> <span class="n">height</span><span class="o">*</span><span class="n">tan</span><span class="p">(</span><span class="n">leftEdge</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+
+&nbsp;&nbsp;&nbsp; <span class="p">}</span>
+
+&nbsp;&nbsp;&nbsp; <span class="k">if</span><span class="p">(</span><span class="n">rightEdge</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">!=</span><span class="mi">0</span><span class="p">)</span>
+&nbsp;&nbsp;&nbsp; <span class="p">{</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="n">right1</span><span class="p">.</span><span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<span class="n">right1</span><span class="p">.</span><span class="n">y</span><span class="o">=</span><span class="n">rightEdge</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="n">sin</span><span class="p">(</span><span class="n">rightEdge</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="n">right2</span><span class="p">.</span><span class="n">x</span><span class="o">=</span><span class="n">width</span><span class="p">;</span>&nbsp;&nbsp; &nbsp;<span class="n">right2</span><span class="p">.</span><span class="n">y</span><span class="o">=-</span><span class="n">right2</span><span class="p">.</span><span class="n">x</span><span class="o">/</span><span class="n">tan</span><span class="p">(</span><span class="n">rightEdge</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="n">right1</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+&nbsp;&nbsp;&nbsp; <span class="p">}</span>
+&nbsp;&nbsp;&nbsp; <span class="k">else</span>
+&nbsp;&nbsp;&nbsp; <span class="p">{</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="n">right1</span><span class="p">.</span><span class="n">y</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<span class="n">right1</span><span class="p">.</span><span class="n">x</span><span class="o">=</span><span class="n">rightEdge</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="n">cos</span><span class="p">(</span><span class="n">rightEdge</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="n">right2</span><span class="p">.</span><span class="n">y</span><span class="o">=</span><span class="n">height</span><span class="p">;</span>&nbsp;&nbsp; &nbsp;<span class="n">right2</span><span class="p">.</span><span class="n">x</span><span class="o">=</span><span class="n">right1</span><span class="p">.</span><span class="n">x</span> <span class="o">-</span> <span class="n">height</span><span class="o">*</span><span class="n">tan</span><span class="p">(</span><span class="n">rightEdge</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+
+&nbsp;&nbsp;&nbsp; <span class="p">}</span>
+
+&nbsp;&nbsp;&nbsp; <span class="n">bottom1</span><span class="p">.</span><span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>&nbsp;&nbsp; &nbsp;<span class="n">bottom1</span><span class="p">.</span><span class="n">y</span><span class="o">=</span><span class="n">bottomEdge</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="n">sin</span><span class="p">(</span><span class="n">bottomEdge</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+
+&nbsp;&nbsp;&nbsp; <span class="n">bottom2</span><span class="p">.</span><span class="n">x</span><span class="o">=</span><span class="n">width</span><span class="p">;</span><span class="n">bottom2</span><span class="p">.</span><span class="n">y</span><span class="o">=-</span><span class="n">bottom2</span><span class="p">.</span><span class="n">x</span><span class="o">/</span><span class="n">tan</span><span class="p">(</span><span class="n">bottomEdge</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="n">bottom1</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+
+&nbsp;&nbsp;&nbsp; <span class="n">top1</span><span class="p">.</span><span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<span class="n">top1</span><span class="p">.</span><span class="n">y</span><span class="o">=</span><span class="n">topEdge</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="n">sin</span><span class="p">(</span><span class="n">topEdge</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+&nbsp;&nbsp;&nbsp; <span class="n">top2</span><span class="p">.</span><span class="n">x</span><span class="o">=</span><span class="n">width</span><span class="p">;</span>&nbsp;&nbsp; &nbsp;<span class="n">top2</span><span class="p">.</span><span class="n">y</span><span class="o">=-</span><span class="n">top2</span><span class="p">.</span><span class="n">x</span><span class="o">/</span><span class="n">tan</span><span class="p">(</span><span class="n">topEdge</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="n">top1</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+</pre></div>
+
+
+<p>The code above finds two points on a line. The right and left edges need the "if" construct. These edges are vertical. They can have infinite slope, something a computer cannot represent. So I check if they have infinite slope or not. If it does, calculate two points using a "safe" method. Otherwise, the normal method can be used.</p>
+<p>Now this part calculates the actual intersection points: </p>
+<div class="codehilite"><pre> &nbsp;&nbsp;&nbsp; <span class="c1">// Next, we find the intersection of&nbsp; these four lines</span>
+&nbsp;&nbsp;&nbsp; <span class="kt">double</span> <span class="n">leftA</span> <span class="o">=</span> <span class="n">left2</span><span class="p">.</span><span class="n">y</span><span class="o">-</span><span class="n">left1</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+&nbsp;&nbsp;&nbsp; <span class="kt">double</span> <span class="n">leftB</span> <span class="o">=</span> <span class="n">left1</span><span class="p">.</span><span class="n">x</span><span class="o">-</span><span class="n">left2</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+
+&nbsp;&nbsp;&nbsp; <span class="kt">double</span> <span class="n">leftC</span> <span class="o">=</span> <span class="n">leftA</span><span class="o">*</span><span class="n">left1</span><span class="p">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">leftB</span><span class="o">*</span><span class="n">left1</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+
+&nbsp;&nbsp;&nbsp; <span class="kt">double</span> <span class="n">rightA</span> <span class="o">=</span> <span class="n">right2</span><span class="p">.</span><span class="n">y</span><span class="o">-</span><span class="n">right1</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+&nbsp;&nbsp;&nbsp; <span class="kt">double</span> <span class="n">rightB</span> <span class="o">=</span> <span class="n">right1</span><span class="p">.</span><span class="n">x</span><span class="o">-</span><span class="n">right2</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+
+&nbsp;&nbsp;&nbsp; <span class="kt">double</span> <span class="n">rightC</span> <span class="o">=</span> <span class="n">rightA</span><span class="o">*</span><span class="n">right1</span><span class="p">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">rightB</span><span class="o">*</span><span class="n">right1</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+
+&nbsp;&nbsp;&nbsp; <span class="kt">double</span> <span class="n">topA</span> <span class="o">=</span> <span class="n">top2</span><span class="p">.</span><span class="n">y</span><span class="o">-</span><span class="n">top1</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+&nbsp;&nbsp;&nbsp; <span class="kt">double</span> <span class="n">topB</span> <span class="o">=</span> <span class="n">top1</span><span class="p">.</span><span class="n">x</span><span class="o">-</span><span class="n">top2</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+
+&nbsp;&nbsp;&nbsp; <span class="kt">double</span> <span class="n">topC</span> <span class="o">=</span> <span class="n">topA</span><span class="o">*</span><span class="n">top1</span><span class="p">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">topB</span><span class="o">*</span><span class="n">top1</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+
+&nbsp;&nbsp;&nbsp; <span class="kt">double</span> <span class="n">bottomA</span> <span class="o">=</span> <span class="n">bottom2</span><span class="p">.</span><span class="n">y</span><span class="o">-</span><span class="n">bottom1</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+&nbsp;&nbsp;&nbsp; <span class="kt">double</span> <span class="n">bottomB</span> <span class="o">=</span> <span class="n">bottom1</span><span class="p">.</span><span class="n">x</span><span class="o">-</span><span class="n">bottom2</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+
+&nbsp;&nbsp;&nbsp; <span class="kt">double</span> <span class="n">bottomC</span> <span class="o">=</span> <span class="n">bottomA</span><span class="o">*</span><span class="n">bottom1</span><span class="p">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">bottomB</span><span class="o">*</span><span class="n">bottom1</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+
+&nbsp;&nbsp;&nbsp; <span class="c1">// Intersection of left and top</span>
+&nbsp;&nbsp;&nbsp; <span class="kt">double</span> <span class="n">detTopLeft</span> <span class="o">=</span> <span class="n">leftA</span><span class="o">*</span><span class="n">topB</span> <span class="o">-</span> <span class="n">leftB</span><span class="o">*</span><span class="n">topA</span><span class="p">;</span>
+
+&nbsp;&nbsp;&nbsp; <span class="n">CvPoint</span> <span class="n">ptTopLeft</span> <span class="o">=</span> <span class="n">cvPoint</span><span class="p">((</span><span class="n">topB</span><span class="o">*</span><span class="n">leftC</span> <span class="o">-</span> <span class="n">leftB</span><span class="o">*</span><span class="n">topC</span><span class="p">)</span><span class="o">/</span><span class="n">detTopLeft</span><span class="p">,</span> <span class="p">(</span><span class="n">leftA</span><span class="o">*</span><span class="n">topC</span> <span class="o">-</span> <span class="n">topA</span><span class="o">*</span><span class="n">leftC</span><span class="p">)</span><span class="o">/</span><span class="n">detTopLeft</span><span class="p">);</span>
+
+&nbsp;&nbsp;&nbsp; <span class="c1">// Intersection of top and right</span>
+&nbsp;&nbsp;&nbsp; <span class="kt">double</span> <span class="n">detTopRight</span> <span class="o">=</span> <span class="n">rightA</span><span class="o">*</span><span class="n">topB</span> <span class="o">-</span> <span class="n">rightB</span><span class="o">*</span><span class="n">topA</span><span class="p">;</span>
+
+&nbsp;&nbsp;&nbsp; <span class="n">CvPoint</span> <span class="n">ptTopRight</span> <span class="o">=</span> <span class="n">cvPoint</span><span class="p">((</span><span class="n">topB</span><span class="o">*</span><span class="n">rightC</span><span class="o">-</span><span class="n">rightB</span><span class="o">*</span><span class="n">topC</span><span class="p">)</span><span class="o">/</span><span class="n">detTopRight</span><span class="p">,</span> <span class="p">(</span><span class="n">rightA</span><span class="o">*</span><span class="n">topC</span><span class="o">-</span><span class="n">topA</span><span class="o">*</span><span class="n">rightC</span><span class="p">)</span><span class="o">/</span><span class="n">detTopRight</span><span class="p">);</span>
+
+&nbsp;&nbsp;&nbsp; <span class="c1">// Intersection of right and bottom</span>
+&nbsp;&nbsp;&nbsp; <span class="kt">double</span> <span class="n">detBottomRight</span> <span class="o">=</span> <span class="n">rightA</span><span class="o">*</span><span class="n">bottomB</span> <span class="o">-</span> <span class="n">rightB</span><span class="o">*</span><span class="n">bottomA</span><span class="p">;</span>
+&nbsp;&nbsp;&nbsp; <span class="n">CvPoint</span> <span class="n">ptBottomRight</span> <span class="o">=</span> <span class="n">cvPoint</span><span class="p">((</span><span class="n">bottomB</span><span class="o">*</span><span class="n">rightC</span><span class="o">-</span><span class="n">rightB</span><span class="o">*</span><span class="n">bottomC</span><span class="p">)</span><span class="o">/</span><span class="n">detBottomRight</span><span class="p">,</span> <span class="p">(</span><span class="n">rightA</span><span class="o">*</span><span class="n">bottomC</span><span class="o">-</span><span class="n">bottomA</span><span class="o">*</span><span class="n">rightC</span><span class="p">)</span><span class="o">/</span><span class="n">detBottomRight</span><span class="p">);</span><span class="c1">// Intersection of bottom and left</span>
+&nbsp;&nbsp;&nbsp; <span class="kt">double</span> <span class="n">detBottomLeft</span> <span class="o">=</span> <span class="n">leftA</span><span class="o">*</span><span class="n">bottomB</span><span class="o">-</span><span class="n">leftB</span><span class="o">*</span><span class="n">bottomA</span><span class="p">;</span>
+&nbsp;&nbsp;&nbsp; <span class="n">CvPoint</span> <span class="n">ptBottomLeft</span> <span class="o">=</span> <span class="n">cvPoint</span><span class="p">((</span><span class="n">bottomB</span><span class="o">*</span><span class="n">leftC</span><span class="o">-</span><span class="n">leftB</span><span class="o">*</span><span class="n">bottomC</span><span class="p">)</span><span class="o">/</span><span class="n">detBottomLeft</span><span class="p">,</span> <span class="p">(</span><span class="n">leftA</span><span class="o">*</span><span class="n">bottomC</span><span class="o">-</span><span class="n">bottomA</span><span class="o">*</span><span class="n">leftC</span><span class="p">)</span><span class="o">/</span><span class="n">detBottomLeft</span><span class="p">);</span>
+</pre></div>
+
+
+<p>Now we have the points. Now we can correct the skewed perspective. First, we find the longest edge of the puzzle. The new image will be a square of the length of the longest edge. </p>
+<div class="codehilite"><pre>&nbsp;&nbsp;&nbsp; <span class="kt">int</span> <span class="n">maxLength</span> <span class="o">=</span> <span class="p">(</span><span class="n">ptBottomLeft</span><span class="p">.</span><span class="n">x</span><span class="o">-</span><span class="n">ptBottomRight</span><span class="p">.</span><span class="n">x</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">ptBottomLeft</span><span class="p">.</span><span class="n">x</span><span class="o">-</span><span class="n">ptBottomRight</span><span class="p">.</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">ptBottomLeft</span><span class="p">.</span><span class="n">y</span><span class="o">-</span><span class="n">ptBottomRight</span><span class="p">.</span><span class="n">y</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">ptBottomLeft</span><span class="p">.</span><span class="n">y</span><span class="o">-</span><span class="n">ptBottomRight</span><span class="p">.</span><span class="n">y</span><span class="p">);</span>
+&nbsp;&nbsp;&nbsp; <span class="kt">int</span> <span class="n">temp</span> <span class="o">=</span> <span class="p">(</span><span class="n">ptTopRight</span><span class="p">.</span><span class="n">x</span><span class="o">-</span><span class="n">ptBottomRight</span><span class="p">.</span><span class="n">x</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">ptTopRight</span><span class="p">.</span><span class="n">x</span><span class="o">-</span><span class="n">ptBottomRight</span><span class="p">.</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">ptTopRight</span><span class="p">.</span><span class="n">y</span><span class="o">-</span><span class="n">ptBottomRight</span><span class="p">.</span><span class="n">y</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">ptTopRight</span><span class="p">.</span><span class="n">y</span><span class="o">-</span><span class="n">ptBottomRight</span><span class="p">.</span><span class="n">y</span><span class="p">);</span>
+
+&nbsp;&nbsp;&nbsp; <span class="k">if</span><span class="p">(</span><span class="n">temp</span><span class="o">&gt;</span><span class="n">maxLength</span><span class="p">)</span> <span class="n">maxLength</span> <span class="o">=</span> <span class="n">temp</span><span class="p">;</span>
+
+&nbsp;&nbsp;&nbsp; <span class="n">temp</span> <span class="o">=</span> <span class="p">(</span><span class="n">ptTopRight</span><span class="p">.</span><span class="n">x</span><span class="o">-</span><span class="n">ptTopLeft</span><span class="p">.</span><span class="n">x</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">ptTopRight</span><span class="p">.</span><span class="n">x</span><span class="o">-</span><span class="n">ptTopLeft</span><span class="p">.</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">ptTopRight</span><span class="p">.</span><span class="n">y</span><span class="o">-</span><span class="n">ptTopLeft</span><span class="p">.</span><span class="n">y</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">ptTopRight</span><span class="p">.</span><span class="n">y</span><span class="o">-</span><span class="n">ptTopLeft</span><span class="p">.</span><span class="n">y</span><span class="p">);</span>
+
+&nbsp;&nbsp;&nbsp; <span class="k">if</span><span class="p">(</span><span class="n">temp</span><span class="o">&gt;</span><span class="n">maxLength</span><span class="p">)</span> <span class="n">maxLength</span> <span class="o">=</span> <span class="n">temp</span><span class="p">;</span>
+
+&nbsp;&nbsp;&nbsp; <span class="n">temp</span> <span class="o">=</span> <span class="p">(</span><span class="n">ptBottomLeft</span><span class="p">.</span><span class="n">x</span><span class="o">-</span><span class="n">ptTopLeft</span><span class="p">.</span><span class="n">x</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">ptBottomLeft</span><span class="p">.</span><span class="n">x</span><span class="o">-</span><span class="n">ptTopLeft</span><span class="p">.</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">ptBottomLeft</span><span class="p">.</span><span class="n">y</span><span class="o">-</span><span class="n">ptTopLeft</span><span class="p">.</span><span class="n">y</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">ptBottomLeft</span><span class="p">.</span><span class="n">y</span><span class="o">-</span><span class="n">ptTopLeft</span><span class="p">.</span><span class="n">y</span><span class="p">);</span>
+
+&nbsp;&nbsp;&nbsp; <span class="k">if</span><span class="p">(</span><span class="n">temp</span><span class="o">&gt;</span><span class="n">maxLength</span><span class="p">)</span> <span class="n">maxLength</span> <span class="o">=</span> <span class="n">temp</span><span class="p">;</span>
+
+&nbsp;&nbsp;&nbsp; <span class="n">maxLength</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">((</span><span class="kt">double</span><span class="p">)</span><span class="n">maxLength</span><span class="p">);</span>
+</pre></div>
+
+
+<p>Simple code. We calculate the length of each edge. Whenever we find a longer edge, we store its length squared. And finally when we have the longest edge, we do a square root to get its exact length.</p>
+<p>Next, we create source and destination points: </p>
+<div class="codehilite"><pre><span class="n">Point2f</span> <span class="n">src</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">dst</span><span class="p">[</span><span class="mi">4</span><span class="p">];</span>
+<span class="n">src</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">ptTopLeft</span><span class="p">;</span>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<span class="n">dst</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">Point2f</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">);</span>
+<span class="n">src</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">ptTopRight</span><span class="p">;</span>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<span class="n">dst</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">Point2f</span><span class="p">(</span><span class="n">maxLength</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+<span class="n">src</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">ptBottomRight</span><span class="p">;</span>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<span class="n">dst</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">Point2f</span><span class="p">(</span><span class="n">maxLength</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">maxLength</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+<span class="n">src</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">ptBottomLeft</span><span class="p">;</span>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<span class="n">dst</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">Point2f</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">maxLength</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+</pre></div>
+
+
+<p>The top left point in the source is equivalent to the point (0,0) in the corrected image. And so on.</p>
+<p>Then we create a new image and do the undistortion: </p>
+<div class="codehilite"><pre><span class="n">Mat</span> <span class="n">undistorted</span> <span class="o">=</span> <span class="n">Mat</span><span class="p">(</span><span class="n">Size</span><span class="p">(</span><span class="n">maxLength</span><span class="p">,</span> <span class="n">maxLength</span><span class="p">),</span> <span class="n">CV_8UC1</span><span class="p">);</span>
+<span class="n">cv</span><span class="o">::</span><span class="n">warpPerspective</span><span class="p">(</span><span class="n">original</span><span class="p">,</span> <span class="n">undistorted</span><span class="p">,</span> <span class="n">cv</span><span class="o">::</span><span class="n">getPerspectiveTransform</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">),</span> <span class="n">Size</span><span class="p">(</span><span class="n">maxLength</span><span class="p">,</span> <span class="n">maxLength</span><span class="p">));</span>
+</pre></div>
+
+
+<p>Now the image undistorted has the corrected image. Simple as that!</p>
+<figure><img alt="The undistorted SuDoKu puzzle" src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/sudoku-undistorted.jpg">  <figcaption>
+<p>The undistorted SuDoKu puzzle  </p>
+</figcaption>
+</figure>
+<h2>Summary</h2>
+<p>This was a long one! In this post, we merged lines that could possibly be representing the same physical border. Then we found lines nearest to the edges. Then, we calculated intersections. And finally, we undistorted the puzzle.</p>
+<p>The next step is recognizing the characters and generating an internal representation of the puzzle. Then, we can solve the puzzle finally!</p>
+        </div>
+
+        
+            <hr>
+            <h2>More in the series</h2>
+            <p>This tutorial is part of a series called <strong>SuDoKu Grabber in OpenCV</strong>:</p>
+            <ol>
+                
+                    <li>
+                        
+                            <a href="https://aishack.in/tutorials/sudoku-grabber-opencv-plot/">The Plot</a>
+                        
+                    </li>
+                
+                    <li>
+                        
+                            <a href="https://aishack.in/tutorials/sudoku-grabber-opencv-detection/">Grid detection</a>
+                        
+                    </li>
+                
+                    <li>
+                        
+                            <strong>Extracting the grid</strong>
+                        
+                    </li>
+                
+                    <li>
+                        
+                            <a href="https://aishack.in/tutorials/sudoku-grabber-opencv-extracting-digits/">Extracting digits</a>
+                        
+                    </li>
+                
+                    <li>
+                        
+                            <a href="https://aishack.in/tutorials/sudoku-grabber-opencv-recognizing-digits/">Recognizing digits</a>
+                        
+                    </li>
+                
+            </ol>
+        
+
+        <hr>
+        <div class="post-tutorial-social">
+           <div class="fb-like fb_iframe_widget" data-href="http://facebook.com/aishack" data-adapt-container-width="true" data-layout="standard" data-action="like" data-show-faces="true" fb-xfbml-state="rendered" fb-iframe-plugin-query="action=like&amp;app_id=&amp;container_width=770&amp;href=http%3A%2F%2Ffacebook.com%2Faishack&amp;layout=standard&amp;locale=en_US&amp;sdk=joey&amp;show_faces=true"><span style="vertical-align: bottom; width: 450px; height: 20px;"><iframe name="f3353637c572208" width="1000px" height="1000px" data-testid="fb:like Facebook Social Plugin" title="fb:like Facebook Social Plugin" frameborder="0" allowtransparency="true" allowfullscreen="true" scrolling="no" allow="encrypted-media" src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/like(1).html" style="border: none; visibility: visible; --darkreader-inline-border-top: initial; --darkreader-inline-border-right: initial; --darkreader-inline-border-bottom: initial; --darkreader-inline-border-left: initial; width: 450px; height: 20px;" data-darkreader-inline-border-top="" data-darkreader-inline-border-right="" data-darkreader-inline-border-bottom="" data-darkreader-inline-border-left="" class=""></iframe></span></div> 
+           <hr>
+            <div class="sharethis-inline-share-buttons st-center  st-inline-share-buttons st-animated" id="st-1"><div class="st-total ">
+  <span class="st-label">14</span>
+  <span class="st-shares">
+    Shares
+  </span>
+</div><div class="st-btn st-first" data-network="facebook" style="display: inline-block;">
+  <img alt="facebook sharing button" src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/facebook.svg">
+  
+</div><div class="st-btn" data-network="twitter" style="display: inline-block;">
+  <img alt="twitter sharing button" src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/twitter.svg">
+  
+</div><div class="st-btn" data-network="reddit" style="display: inline-block;">
+  <img alt="reddit sharing button" src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/reddit.svg">
+  
+</div><div class="st-btn" data-network="linkedin" style="display: inline-block;">
+  <img alt="linkedin sharing button" src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/linkedin.svg">
+  
+</div><div class="st-btn" data-network="email" style="display: inline-block;">
+  <img alt="email sharing button" src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/email.svg">
+  
+</div><div class="st-btn st-last" data-network="sharethis" style="display: inline-block;">
+  <img alt="sharethis sharing button" src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/sharethis.svg">
+  
+</div></div>
+        </div>
+
+        
+        
+            <hr>
+            <h4>Related posts</h4>
+            <div class="row">
+                
+                    <div class="col-md-3">
+                        <a href="https://aishack.in/tutorials/2d-matrices-cvmat-opencv/"><img class="img-responsive" src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/post-opencv.jpg"></a>
+                        <div>
+                            <h4><a href="https://aishack.in/tutorials/2d-matrices-cvmat-opencv/">2D matrices with CvMat in OpenCV</a></h4>
+                            <p></p>
+                            <a class="read-more" href="https://aishack.in/tutorials/2d-matrices-cvmat-opencv/"><button type="button" role="button" class="btn btn-default">Read more</button></a>
+                        </div>
+                    </div>
+                
+                    <div class="col-md-3">
+                        <a href="https://aishack.in/tutorials/converting-lines-normal-slopeintercept-form/"><img class="img-responsive" src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/post-slope-normal.jpg"></a>
+                        <div>
+                            <h4><a href="https://aishack.in/tutorials/converting-lines-normal-slopeintercept-form/">Converting lines from normal to slope-intercept form</a></h4>
+                            <p></p>
+                            <a class="read-more" href="https://aishack.in/tutorials/converting-lines-normal-slopeintercept-form/"><button type="button" role="button" class="btn btn-default">Read more</button></a>
+                        </div>
+                    </div>
+                
+                    <div class="col-md-3">
+                        <a href="https://aishack.in/tutorials/drawing-histograms-opencv/"><img class="img-responsive" src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/post-drawing-histograms.jpg"></a>
+                        <div>
+                            <h4><a href="https://aishack.in/tutorials/drawing-histograms-opencv/">Drawing Histograms in OpenCV</a></h4>
+                            <p></p>
+                            <a class="read-more" href="https://aishack.in/tutorials/drawing-histograms-opencv/"><button type="button" role="button" class="btn btn-default">Read more</button></a>
+                        </div>
+                    </div>
+                
+                    <div class="col-md-3">
+                        <a href="https://aishack.in/tutorials/filtering-images/"><img class="img-responsive" src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/post-filtering.jpg"></a>
+                        <div>
+                            <h4><a href="https://aishack.in/tutorials/filtering-images/">Filtering images</a></h4>
+                            <p></p>
+                            <a class="read-more" href="https://aishack.in/tutorials/filtering-images/"><button type="button" role="button" class="btn btn-default">Read more</button></a>
+                        </div>
+                    </div>
+                
+            </div>
+        
+
+        <hr>
+
+        
+        
+
+        
+        <div class="well">
+            <div class="col-sm-2"><a href="http://utkarshsinha.com/" target="_blank"><img class="img-circle" src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/066eac5a12b429666971cd4ae450f169.jpeg"> </a></div>
+            <div class="col-sm-10 author-bio">Utkarsh Sinha created AI Shack in 2010 and has since been working on computer vision and related fields. He is currently at Microsoft working on computer vision.</div>
+            <div class="clearfix"></div>
+        </div>
+
+        
+            <div id="disqus_thread"><iframe id="dsq-app1720" name="dsq-app1720" allowtransparency="true" frameborder="0" scrolling="no" tabindex="0" title="Disqus" width="100%" src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/saved_resource(1).html" style="width: 1px !important; min-width: 100% !important; border: none !important; overflow: hidden !important; height: 1227px !important; --darkreader-inline-border-top: initial; --darkreader-inline-border-right: initial; --darkreader-inline-border-bottom: initial; --darkreader-inline-border-left: initial;" data-darkreader-inline-border-top="" data-darkreader-inline-border-right="" data-darkreader-inline-border-bottom="" data-darkreader-inline-border-left="" horizontalscrolling="no" verticalscrolling="no"></iframe><iframe id="indicator-north" name="indicator-north" allowtransparency="true" frameborder="0" scrolling="no" tabindex="0" title="Disqus" style="width: 770px !important; border: none !important; overflow: hidden !important; top: 0px !important; min-width: 770px !important; max-width: 770px !important; position: fixed !important; z-index: 2147483646 !important; height: 0px !important; min-height: 0px !important; max-height: 0px !important; display: none !important; --darkreader-inline-border-top: initial; --darkreader-inline-border-right: initial; --darkreader-inline-border-bottom: initial; --darkreader-inline-border-left: initial;" data-darkreader-inline-border-top="" data-darkreader-inline-border-right="" data-darkreader-inline-border-bottom="" data-darkreader-inline-border-left="" src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/saved_resource(2).html"></iframe><iframe id="indicator-south" name="indicator-south" allowtransparency="true" frameborder="0" scrolling="no" tabindex="0" title="Disqus" style="width: 770px !important; border: none !important; overflow: hidden !important; bottom: 0px !important; min-width: 770px !important; max-width: 770px !important; position: fixed !important; z-index: 2147483646 !important; height: 0px !important; min-height: 0px !important; max-height: 0px !important; display: none !important; --darkreader-inline-border-top: initial; --darkreader-inline-border-right: initial; --darkreader-inline-border-bottom: initial; --darkreader-inline-border-left: initial;" data-darkreader-inline-border-top="" data-darkreader-inline-border-right="" data-darkreader-inline-border-bottom="" data-darkreader-inline-border-left="" src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/saved_resource(3).html"></iframe></div>
+            <script>
+            var disqus_config = function () {
+                this.page.url = "http://aishack.in/tutorials/sudoku-grabber-opencv-extracting-grid/";  // Replace PAGE_URL with your page's canonical URL variable
+                this.page.identifier = "tutorials_sudoku-grabber-opencv-extracting-grid"; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+            };
+            (function() { // DON'T EDIT BELOW THIS LINE
+                var d = document, s = d.createElement('script');
+                s.src = '//aishack.disqus.com/embed.js';
+                s.setAttribute('data-timestamp', +new Date());
+                (d.head || d.body).appendChild(s);
+            })();
+            </script>
+            <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        
+
+    
+
+                </div>
+                    
+
+                
+            </div>
+        </div>
+        <div class="container">
+            
+
+<div class="row footer">
+    <div class="col-md-4">
+        <img src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/logo-footer-left.png" class="pull-left logo">
+        <h4>About AI Shack</h4>
+        <p class="about-footer">Learn about the latest in AI technology with in-depth tutorials on vision and learning!</p>
+        <a class="pull-right" href="https://aishack.in/about/">More...</a>
+        <iframe id="twitter-widget-0" scrolling="no" frameborder="0" allowtransparency="true" allowfullscreen="true" class="twitter-follow-button twitter-follow-button-rendered" style="position: static; visibility: visible; width: 170px; height: 28px;" title="Twitter Follow Button" src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/follow_button.6787510241df65d128e2b60207ad4c25.en.html" data-screen-name="utkarshsinha"></iframe>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+    </div>
+    <div class="col-md-4 getting-started">
+        <h4>Get started</h4>
+        <ul class="about-footer">
+            <li><a href="https://aishack.in/tracks/opencv-basics/">Get started with OpenCV</a></li>
+            <li><a href="https://aishack.in/tutorials/tracking-colored-objects-opencv/">Track a specific color on video</a></li>
+            <li><a href="https://aishack.in/tracks/image-processing-algorithms-level-1/">Learn basic image processing algorithms</a></li>
+            <li><a href="https://aishack.in/tutorials/single-neuron-dictomizer/">How to build artificial neurons?</a></li>
+            <li><a href="http://github.com/aishack/">Look at some source code</a></li>
+        </ul>
+    </div>
+    <div class="col-md-4">
+        <div id="fb-root" class=" fb_reset"><div style="position: absolute; top: -10000px; width: 0px; height: 0px;"><div></div></div></div>
+        <script>(function(d, s, id) {
+          var js, fjs = d.getElementsByTagName(s)[0];
+          if (d.getElementById(id)) return;
+          js = d.createElement(s); js.id = id;
+          js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.4";
+          fjs.parentNode.insertBefore(js, fjs);
+        }(document, 'script', 'facebook-jssdk'));</script>
+
+        <div class="fb-page fb_iframe_widget" data-href="https://www.facebook.com/aishack" data-width="380" data-small-header="true" data-adapt-container-width="false" data-hide-cover="true" data-show-facepile="true" data-show-posts="false" fb-xfbml-state="rendered" fb-iframe-plugin-query="adapt_container_width=false&amp;app_id=&amp;container_width=237&amp;hide_cover=true&amp;href=https%3A%2F%2Fwww.facebook.com%2Faishack&amp;locale=en_US&amp;sdk=joey&amp;show_facepile=true&amp;show_posts=false&amp;small_header=true&amp;width=380"><span style="vertical-align: bottom; width: 380px; height: 121px;"><iframe name="f1c096696f241bc" width="380px" height="1000px" data-testid="fb:page Facebook Social Plugin" title="fb:page Facebook Social Plugin" frameborder="0" allowtransparency="true" allowfullscreen="true" scrolling="no" allow="encrypted-media" src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/page.html" style="border: none; visibility: visible; --darkreader-inline-border-top: initial; --darkreader-inline-border-right: initial; --darkreader-inline-border-bottom: initial; --darkreader-inline-border-left: initial; width: 380px; height: 121px;" data-darkreader-inline-border-top="" data-darkreader-inline-border-right="" data-darkreader-inline-border-bottom="" data-darkreader-inline-border-left="" class=""></iframe></span></div>
+        </div>
+    <!--div class='col-md-5'>
+        <div class='panel panel-default'>
+            <div class='panel-heading'>AI Shack on Facebook</div>
+            <div class='facebook-liker-nopadding panel-body'>
+                <iframe src="//www.facebook.com/plugins/likebox.php?href=https%3A%2F%2Fwww.facebook.com%2Faishack&amp;width=360&amp;height=258&amp;colorscheme=light&amp;show_faces=true&amp;header=false&amp;stream=false&amp;show_border=false" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:360px; height:258px;" allowTransparency="true"></iframe>
+            </div>
+        </div>
+    </div>
+    <div class='col-md-3'>
+        <div class='panel panel-default'>
+            <div class='panel-heading'><span class='glyphicon glyphicon-user'></span> Contact</div>
+            <div class='panel-body'><p>You can contact me through the internet over the following channels:</p>
+            <ul class='list-unstyled'>
+                <li><a href='http://facebook.com/aishack/' target='_blank'><span class='ico ico-facebook'></span>Facebook</a></li>
+                <li><a href='http://twitter.com/aishack' target='_blank'><span class='ico ico-twitter'></span>Twitter</a></li>
+                <li><a href='http://github.com/aishack' target='_blank'><span class='ico ico-github'></span>Github</a></li>
+                <li><a href='mailto:utkarsh@utkarshsinha.com'><span class='ico ico-email'></span>Email</a></li>
+            </ul>
+            </div>
+        </div>
+    </div>
+    <div class='col-md-4'>
+        <div class='panel panel-default'>
+            <div class='panel-heading'><span class='glyphicon glyphicon-question-sign'></span> Where to start?</div>
+            <div class='panel-body'>
+                <p>So you want to get started with AI but you're not sure where. Here are some links to get you started:</p>
+                <ul>
+                    <li><a href='/tracks/opencv-basics/'>Get started with OpenCV</a></li>
+                    <li><a href='/tutorials/tracking-colored-objects-in-opencv/'>Track a specific color on video</a></li>
+                    <li><a href='/tracks/image-processing-algorithms-level-1/'>Learn basic image processing algorithms</a></li>
+                    <li><a href='/tutorials/a-single-neuron-dictomizer/'>How to build artificial neurons?</a></li>
+                    <li><a href='http://github.com/aishack/'>Look at some source code</a></li>
+                </ul>
+            </div>
+        </div>
+    </div-->
+</div>
+
+        </div>
+        <div class="container-fluid footer-bottom">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-12">
+                        <p class="creator">Created by <a href="http://utkarshsinha.com/" target="_blank">Utkarsh Sinha</a></p>
+                </div>
+            </div>
+        </div>
+        <!--script src='/static/js/jquery-1.11.1.min.js'></script>
+        <script src='/static/js/bootstrap.min.js'></script>
+        <script src='/static/js/bootstrap-editable.min.js'></script-->
+        <script src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/bundle.min.js"></script>
+        
+            <script>
+              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+              })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+              ga('create', 'UA-587551-5', 'auto');
+              ga('send', 'pageview');
+
+            </script>
+        
+        <script>
+        function gotoTop() {
+            var targetOffset = $('body').offset().top;
+            $('html,body').animate({scrollTop: targetOffset}, 1000);
+            return false;
+        }
+        $(document).ready(function() {
+            $("#btn-signup").tooltip({placement: 'top', title: 'Signup, track your progress, take quizzes.'});
+            $('.to-top').click(gotoTop);
+        });
+        
+        
+        </script>
+
+
+        
+    
+
+</div><iframe src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/portal-v2.html" id="st_gdpr_iframe" title="GDPR Consent Management" style="width: 0px; height: 0px; position: absolute; left: -5000px;"></iframe><iframe style="display: none;" src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/saved_resource(4).html"></iframe><iframe scrolling="no" frameborder="0" allowtransparency="true" src="./SuDoKu Grabber in OpenCV_ Extracting the grid - AI Shack_files/widget_iframe.6787510241df65d128e2b60207ad4c25.html" title="Twitter settings iframe" style="display: none;"></iframe></body></html>

@@ -20,11 +20,27 @@ I found OpenCV's blob function to not quite work the way I wanted (and I could n
 
 ![30 March 2020 - *Floodfilling and blob detection*: I found OpenCV's blob function to not quite work the way I wanted (and slightly difficult to use) so I wrote my own (its really slow and cringy and but it works :sunglasses: )](progress/grid.png)  
 
+
+25 April 2020 - *Corner detection*
+After about a month of battling with this (and trying numerous different approaches), I got it to work (whoop whoop). After finding the grid, OpenCV's contour detection was applied. This returns the coordinates of the pixels in the contours.   
+The corners can be found by iterating through the coordinates and applying some logic.    
+
+- The sum of the bottom left corner should have a small x and y coordinates.  
+- Top left: Small x but large y.  
+- Top right: Large x and large y.  
+- Bottom right: Large x and small y.  
+
+These are the coordinates of the corners!
+
+![30 March 2020 - *Floodfilling and blob detection*: I found OpenCV's blob function to not quite work the way I wanted (and slightly difficult to use) so I wrote my own (its really slow and cringy and but it works :sunglasses: )](progress/corners.png)    
+
+(I tried the line detection approach - where you apply hough transformation and calculate intersection of the lines as the corners, but it seemed in some cases not all the lines of the grid were found)
+
 ### To do:
 - Add pipeline to check style and unit tests. 
 - Code coverage could be cool thing to add 
-
-- Determine locations of corners of grid
+- ~~find grid~~
+- ~~Determine locations of corners of grid~~
 - Apply homography, plot grid to new image (this way we can throw away everything outside of the grid, making it easier to determine position of digits).
 - Determine locations of digits
 - Identify digits
