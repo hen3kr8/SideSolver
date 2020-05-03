@@ -11,7 +11,7 @@ import sys
 from skimage import data, filters
 from skimage.segmentation import flood, flood_fill
 
-display_images_flag = True
+display_images_flag = False
 debug = True
 if debug : np.set_printoptions(threshold=sys.maxsize)
 
@@ -20,13 +20,21 @@ def build_grid():
     raw_image = read_image()
     thres_image = apply_threshold(raw_image)
     grid = find_grid(thres_image)
-    corner_detection(grid)
+    corners = corner_detection(grid)
+
+    if display_images_flag: plot_corners_original(raw_image, corners)
+    
+    # homography
+    image_homog = apply_homography(raw_image, corners)
+
+    # extract digits
+    extract_digits(image_homog)
 
     pass
 
 def read_image():
 
-    file_name = "../sudoku_dataset-master/images/image1.jpg"
+    file_name = "../sudoku_dataset-master/images/image1081.jpg"
     image = cv2.imread(file_name, cv2.IMREAD_GRAYSCALE )
     
     if display_images_flag:
@@ -52,9 +60,12 @@ def apply_threshold(src_image):
     # src_image = blur_image(src_image)
 
     # adaptive gaussian
+    # thres_image = cv2.adaptiveThreshold(src_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+    #               cv2.THRESH_BINARY_INV,53,1)
+
     thres_image = cv2.adaptiveThreshold(src_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-                  cv2.THRESH_BINARY_INV,53,1)
-    
+                  cv2.THRESH_BINARY_INV, 11, 2)
+
     if display_images_flag:
         plt.imshow(thres_image, cmap='gray')
         plt.title("thresholded image")        
@@ -152,7 +163,7 @@ def corner_detection(image):
     top_right_indx, _ = max(enumerate([pt[0][0] - pt[0][1] for pt in
                     largest_contour]), key=operator.itemgetter(1))
 
-    bottom_right, top_left, bottom_left, top_right = [largest_contour[top_left_indx][0], 
+    top_left, top_right, bottom_left, bottom_right = [largest_contour[top_left_indx][0], 
                                                      largest_contour[top_right_indx][0], 
                                                      largest_contour[bottom_right_indx][0],
                                                      largest_contour[bottom_left_indx][0]]
@@ -170,8 +181,85 @@ def corner_detection(image):
         plt.title('corners detected')
         plt.show()
     
-    corners = [bottom_right, top_left, bottom_left, top_right] 
+    corners = [top_left, top_right, bottom_left, bottom_right]
     return corners
+
+
+def plot_corners_original(image, corners):
+    # draw corners
+
+    top_left, top_right, bottom_left, bottom_right = corners
+
+    image = np.asarray(image, 'uint8')
+    image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+    cv2.circle(image, tuple(bottom_right), 8, (0,0,255), -1)
+    cv2.circle(image, tuple(top_left), 8, (0,255,0), -1)
+    cv2.circle(image, tuple(bottom_left), 8, (0,0,0), -1)
+    cv2.circle(image, tuple(top_right), 8, (255,0,0), -1)
+    plt.imshow(image)
+    plt.title('corners detected')
+    plt.show()
+
+def apply_homography(raw_image, corners):
+    # return a new image, with homography applied.
+
+    # corners of new image (idea is that the grid spans the entire new image)
+    corners_dst_bot_r = [raw_image.shape[1],raw_image.shape[0]]
+    corners_dst_top_l = [0, 0]
+    corners_dst_top_r = [raw_image.shape[1], 0]
+    corners_dst_bot_l = [0, raw_image.shape[0]]
+
+    corners_dst = [corners_dst_top_l, corners_dst_top_r, corners_dst_bot_r, corners_dst_bot_l]
+
+    # calculate homography
+    h, _ = cv2.findHomography(np.array(corners), np.array(corners_dst))
+    image_homog = cv2.warpPerspective(raw_image, h, (raw_image.shape[1],raw_image.shape[0]))
+
+    if display_images_flag:
+        plt.imshow(image_homog, cmap='gray')
+        plt.title("applied homography")
+        plt.show()
+
+    return image_homog
+
+
+def extract_digits(image_homog):
+    # divide image into 9 x 9 blocks,
+    # do preprocessing before recognizing digits.
+    # (center image, erode)
+    #  apply biggest blob algorithm to find digit
+    
+    image_homog = apply_threshold(image_homog)
+    plt.imshow(image_homog, cmap='gray')
+    plt.show()
+
+    kernel = np.array([[0., 1., 0.], [1., 1., 1.], [0., 1., 0.]],np.uint8)
+    image_homog = cv2.erode(image_homog,kernel)
+    # image_digit = cv2.erode(image_homog, kernel)
+    
+    plt.imshow(image_homog, cmap='gray')
+    plt.show()
+
+    h, w = image_homog.shape 
+    image_digit_list = []
+
+    for i in range(1,10):
+        image_digit_row_list = []
+
+        for j in range(1,10):
+            image_digit = image_homog[int((i-1)*(h/9)): int(i*(h/9)),
+                                      int((j-1)*(w/9)):int(j*(w/9))]
+
+            # display 4th column 
+            if j%10 == 4:
+                # image_digit = cv2.erode(image_digit,kernel)
+                plt.imshow(image_digit, cmap='gray')
+                plt.show()
+
+            image_digit_row_list.append(image_digit) 
+        
+        image_digit_list.append(image_digit_row_list)
+
 
 def invert(image):
     return np.invert(image)
