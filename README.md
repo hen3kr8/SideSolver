@@ -59,7 +59,7 @@ I tried a different, clearer, more modern day photo of a puzzle and it seems to 
 
 
 ### To do:
-- Add pipeline to check style and unit tests. 
+- Add pipeline to check ~~style~~ and unit tests. 
 - Code coverage could be cool thing to add 
 - ~~find grid~~
 - ~~Determine locations of corners of grid~~
