@@ -10,11 +10,18 @@ import matplotlib.pyplot as plt
 import time
 import operator
 import sys
+import digit_classifier
+import logging
 
 display_images_flag = False
 debug = True
+logging.basicConfig()
+logging.getLogger().setLevel(logging.INFO)
+# tf.get_logger().setLevel('INFO')
+
 if debug:
     np.set_printoptions(threshold=sys.maxsize)
+    # logging.getLogger().setLevel(logging.DEBUG)
 
 
 def build_grid():
@@ -83,7 +90,9 @@ def apply_threshold(src_image):
 
 
 def find_grid(image):
-    #  apply a blob detecting algorithm. In this case floodfilling.
+    '''
+    apply a blob detecting algorithm. In this case floodfilling.
+    '''
 
     new_image = flood_filling(image)
     grid_image = find_biggest_blob(new_image)
@@ -141,7 +150,7 @@ def find_biggest_blob(new_image):
     for i in range(h):
         for j in range(w):
             new_image[i, j] = (255 if new_image[i, j] == biggest_island else 0)
-
+    
     return new_image
 
 
@@ -215,7 +224,9 @@ def plot_corners_original(image, corners):
 def apply_homography(raw_image, corners):
     # return a new image, with homography applied.
 
-    # corners of new image (idea is that the grid spans the entire new image)
+    # corners =  corrdinates on old image which will form corners of new image
+    # (idea is that the grid spans the entire new image)
+
     corners_dst_bot_r = [raw_image.shape[1], raw_image.shape[0]]
     corners_dst_top_l = [0, 0]
     corners_dst_top_r = [raw_image.shape[1], 0]
@@ -234,15 +245,104 @@ def apply_homography(raw_image, corners):
         plt.title("applied homography")
         plt.show()
 
+    logging.info('applied homography')
     return image_homog
 
 
-def extract_digits(image_homog):
-    # divide image into 9 x 9 blocks,
-    # do preprocessing before recognizing digits.
-    # (center image, erode)
-    # apply biggest blob algorithm to find digit
+def crop_center_image(image):
+    '''
+    We take the center 2/3 of the image of a digit and send it to the
+    classifier. This way we crop out the border.
+    We could have done floodfilling, but we do have a risk that the border has
+    more pixels than the digit, or vice versa.
+    '''
 
+    scale_start = 1/7
+    scale_end = 6/7
+    im_heigth, im_width = image.shape
+    start_pixel_x = int(scale_start * im_width)
+    stop_pixel_x = int(scale_end * im_width)
+    start_pixel_y = int(scale_start * im_heigth)
+    stop_pixel_y = int(scale_end * im_heigth)
+
+    debug = False
+    cropped_image = image[start_pixel_y: stop_pixel_y, start_pixel_x: stop_pixel_x]
+   
+    if debug:
+        print('start_pixel_x', start_pixel_x)
+        print('start_pixel_y', start_pixel_y)
+        print('stop_pixel_x', stop_pixel_x)
+        print('stop_pixel_y', stop_pixel_y)
+        print('cropped shape:', cropped_image.shape)
+        print('expected shape: ', (stop_pixel_y - start_pixel_y), (stop_pixel_x - start_pixel_x)  )
+
+    if display_images_flag:
+        plt.imshow(cropped_image)
+        plt.title('cropped_image')
+        plt.show()
+
+    return cropped_image
+
+
+def remove_noise(image_digit):
+    '''
+    We apply erosion followed by dilation . This first makes the borders of the
+    white pixels thinner and thickens them again. Remember to INVERT !
+    This has the effect that the background noise (which are dots) is removed.
+
+    https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/
+    py_imgproc/py_morphological_ops/py_morphological_ops.html
+    '''
+
+    image_digit = np.invert(image_digit)
+    kernel = np.ones((5, 5), np.uint8)
+    noise_free_image = cv2.morphologyEx(image_digit, cv2.MORPH_OPEN, kernel)
+    # noise_free_image = cv2.erode(image_digit, kernel, iterations = 1)
+    display_images_flag = True
+    if display_images_flag:
+        plt.imshow(noise_free_image, cmap='gray')
+        plt.show()
+
+    return noise_free_image 
+
+def is_blank_digit(image_digit):
+    '''
+    Some images are blank and contain only white pixels.
+    Apply flood filling, if the largest object is less than 1/10 of the total 
+    image, then it is considered blank.
+    '''
+    image_digit = apply_threshold(image_digit)
+    plt.imshow(image_digit, cmap='gray')
+    plt.show()
+
+    new_image = flood_filling(image_digit)
+    unique, counts = np.unique(new_image, return_counts=True)
+    z = zip(unique, counts)
+    try:
+        _, biggest_island_size = sorted(z, key=lambda pair: pair[1])[-2]
+
+    except Exception as e:
+    #  out of bounds, which means blank
+        biggest_island_size = 0
+
+    # 2nd last element, 1st value
+
+    print('island size', biggest_island_size, 'np.prod(new_image.shape)', np.prod(new_image.shape))
+
+    if biggest_island_size > np.prod(new_image.shape) * 1/10:
+        print('not blank')
+        return False
+    
+    return True
+
+
+def extract_digits(image_homog):
+    '''
+    Divide image into 9 x 9 blocks,
+    Do preprocessing before recognizing digits. (center image, erode)
+    Apply biggest blob algorithm to find digit.
+    '''
+    
     # image_homog = apply_threshold(image_homog)
     plt.imshow(image_homog, cmap='gray')
     plt.show()
@@ -265,15 +365,26 @@ def extract_digits(image_homog):
                                       int((j-1)*(w/9)):int(j*(w/9))]
 
             # display 4th column
-            if j % 10 == 4:
+            if j % 10 == 8:
                 # image_digit = cv2.erode(image_digit,kernel)
                 plt.imshow(image_digit, cmap='gray')
                 plt.show()
+                noise_free_digit = crop_center_image(image_digit)
+                noise_free_digit = remove_noise(noise_free_digit)
+                
+                if is_blank_digit(noise_free_digit):
+                    noise_free_digit = np.zeros(noise_free_digit.shape) #blank
+                
+                else:
+                    corners = []
+                    # apply_homography(noise_free_digit, ) write 2nd homog method to convert small digits to a 28 x 28 plane
+                    digit_classifier.predict_number(noise_free_digit)
 
             image_digit_row_list.append(image_digit)
 
         image_digit_list.append(image_digit_row_list)
 
+    return image_digit_list
 
 def invert(image):
     return np.invert(image)
