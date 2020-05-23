@@ -8,6 +8,7 @@ from keras.layers import Dense, Conv2D, Dropout, Flatten, MaxPooling2D
 # %matplotlib inline # Only use this if using iPython
 import pickle 
 import logging
+
 from PIL import Image
 
 def main():
@@ -100,10 +101,10 @@ def load_model(filename='models/finalized_model.sav'):
 
 def predict_number(image, model=load_model()):
 
-    plt.imshow(image.reshape(1, 28, 28, 1), cmap='Greys')
-    plt.show()
     pred = model.predict(image.reshape(1, 28, 28, 1))
-    print('prdeiction: ', pred.argmax())
+    
+    logging.info('prediction %d',pred.argmax() )
+    # print('prdeiction: ', pred.argmax())
 
     return None
 

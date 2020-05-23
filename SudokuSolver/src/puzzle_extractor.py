@@ -34,7 +34,7 @@ def build_grid():
         plot_corners_original(raw_image, corners)
 
     # homography
-    image_homog = apply_homography(raw_image, corners)
+    image_homog = apply_homography(raw_image, corners_src=corners)
 
     # extract digits
     extract_digits(image_homog)
@@ -221,25 +221,41 @@ def plot_corners_original(image, corners):
     plt.show()
 
 
-def apply_homography(raw_image, corners):
-    # return a new image, with homography applied.
+def apply_homography(raw_image, corners_src=None, corners_dst=None, 
+                     new_image=None):  
+    """Return a new image, with homography applied.
 
-    # corners =  corrdinates on old image which will form corners of new image
-    # (idea is that the grid spans the entire new image)
+    Arguments:
+        raw_image {np.array} -- raw image to which homography is applied.
+        corners_src {list of tuples} -- coordinates on old image 
+        which will form corners of new image
+        corners_dst {tuple}  -- corners of new image
+        new_image {np.array} -- new array to be returned, needed for shape 
+    Returns:
+        [np.array] -- resulting new image to which homography was applied.
+    """
 
-    corners_dst_bot_r = [raw_image.shape[1], raw_image.shape[0]]
-    corners_dst_top_l = [0, 0]
-    corners_dst_top_r = [raw_image.shape[1], 0]
-    corners_dst_bot_l = [0, raw_image.shape[0]]
+    # (idea is that the grid spans the entire new image, so technically shape stays the same
+    corners_top_l = [0, 0]
+    corners_top_r = [raw_image.shape[1], 0]
+    corners_bot_r = [raw_image.shape[1], raw_image.shape[0]]
+    corners_bot_l = [0, raw_image.shape[0]]
+    corners = [corners_top_l, corners_top_r, corners_bot_r, corners_bot_l]
+    
+    if corners_dst == None:
+        # this is the case when the grid is extracted from the image.
+        corners_dst = corners
+        h, _ = cv2.findHomography(np.array(corners_src), np.array(corners_dst))
+        image_homog = cv2.warpPerspective(raw_image, h, (raw_image.shape[1],
+                      raw_image.shape[0]))
 
-    corners_dst = [corners_dst_top_l, corners_dst_top_r, corners_dst_bot_r,
-                  corners_dst_bot_l]
-
-    # calculate homography
-    h, _ = cv2.findHomography(np.array(corners), np.array(corners_dst))
-    image_homog = cv2.warpPerspective(raw_image, h, (raw_image.shape[1],
-                                      raw_image.shape[0]))
-
+    if corners_src == None:
+        # this is the case when digits are to be reshaped to 28 x 28 images.
+        corners_src = corners
+        h, _ = cv2.findHomography(np.array(corners_src), np.array(corners_dst))
+        image_homog = cv2.warpPerspective(raw_image, h, (new_image.shape[1],
+                      new_image.shape[0]))
+                    
     if display_images_flag:
         plt.imshow(image_homog, cmap='gray')
         plt.title("applied homography")
@@ -295,22 +311,31 @@ def remove_noise(image_digit):
     '''
 
     image_digit = np.invert(image_digit)
-    kernel = np.ones((5, 5), np.uint8)
-    noise_free_image = cv2.morphologyEx(image_digit, cv2.MORPH_OPEN, kernel)
-    # noise_free_image = cv2.erode(image_digit, kernel, iterations = 1)
+    kernel = np.ones((3, 3), np.uint8)
+    # noise_free_image = cv2.morphologyEx(image_digit, cv2.MORPH_OPEN, kernel)
+    noise_free_image = cv2.erode(image_digit, kernel, iterations = 1)
     display_images_flag = True
     if display_images_flag:
         plt.imshow(noise_free_image, cmap='gray')
+        plt.title('removed all noise before prediction')
         plt.show()
 
+    noise_free_image = np.invert(noise_free_image)
     return noise_free_image 
 
+
 def is_blank_digit(image_digit):
-    '''
-    Some images are blank and contain only white pixels.
-    Apply flood filling, if the largest object is less than 1/10 of the total 
-    image, then it is considered blank.
-    '''
+    """ Determine whether image is a digit or blank.  
+        Apply flood filling, if the largest object is less than 1/10 of the 
+        total image, then it is considered blank.
+
+    Arguments:
+        image_digit {np.array} -- image of digit
+
+    Returns:
+        [Boolean] 
+    """    
+    
     image_digit = apply_threshold(image_digit)
     plt.imshow(image_digit, cmap='gray')
     plt.show()
@@ -325,15 +350,40 @@ def is_blank_digit(image_digit):
     #  out of bounds, which means blank
         biggest_island_size = 0
 
-    # 2nd last element, 1st value
+    print('island size', biggest_island_size, 'np.prod(new_image.shape)',
+          np.prod(new_image.shape))
 
-    print('island size', biggest_island_size, 'np.prod(new_image.shape)', np.prod(new_image.shape))
-
-    if biggest_island_size > np.prod(new_image.shape) * 1/10:
+    if biggest_island_size > np.prod(new_image.shape) * 1/12:
         print('not blank')
         return False
-    
-    return True
+
+    else:
+        print('blank')
+        return True
+
+
+def reshape_digit_image(image, new_image_shape=(28, 28)):
+    # reshape to 28 x 28 image using homography
+
+    reshaped_image = np.zeros(new_image_shape)
+    corners_dst_top_l = [0, 0]
+    corners_dst_top_r = [reshaped_image.shape[1], 0]
+    corners_dst_bot_r = [reshaped_image.shape[1], reshaped_image.shape[0]]
+    corners_dst_bot_l = [0, reshaped_image.shape[0]]
+
+    corners_dst = [corners_dst_top_l, corners_dst_top_r, corners_dst_bot_r,
+                  corners_dst_bot_l]
+
+    reshaped_image = apply_homography(image, corners_src=None,
+                                      corners_dst=corners_dst, 
+                                      new_image=reshaped_image)
+
+    if display_images_flag:
+        plt.imshow(reshaped_image)
+        plt.title('reshaped_image')
+        plt.show()
+
+    return reshaped_image
 
 
 def extract_digits(image_homog):
@@ -365,26 +415,30 @@ def extract_digits(image_homog):
                                       int((j-1)*(w/9)):int(j*(w/9))]
 
             # display 4th column
-            if j % 10 == 8:
+            if j % 10 == 4:
                 # image_digit = cv2.erode(image_digit,kernel)
-                plt.imshow(image_digit, cmap='gray')
-                plt.show()
                 noise_free_digit = crop_center_image(image_digit)
-                noise_free_digit = remove_noise(noise_free_digit)
+                # noise_free_digit = remove_noise(noise_free_digit)
+                reshaped_image = reshape_digit_image(noise_free_digit)
                 
-                if is_blank_digit(noise_free_digit):
-                    noise_free_digit = np.zeros(noise_free_digit.shape) #blank
+                plt.imshow(reshaped_image, cmap='gray')
+                plt.title('reshaped image')
+                plt.show()
+
+                if is_blank_digit(reshaped_image):
+                    noise_free_digit = np.zeros(reshaped_image.shape) #blank
                 
                 else:
-                    corners = []
-                    # apply_homography(noise_free_digit, ) write 2nd homog method to convert small digits to a 28 x 28 plane
-                    digit_classifier.predict_number(noise_free_digit)
+                    # reshaped_image = reshape_digit_image(noise_free_digit)
+                    # noise_free_digit = remove_noise(reshaped_image)
+                    digit_classifier.predict_number(reshaped_image)
 
             image_digit_row_list.append(image_digit)
 
         image_digit_list.append(image_digit_row_list)
 
     return image_digit_list
+
 
 def invert(image):
     return np.invert(image)
