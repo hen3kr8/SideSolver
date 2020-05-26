@@ -68,7 +68,7 @@ def blur_image(src_image):
     return blurred_image
 
 
-def apply_threshold(src_image):
+def apply_threshold(src_image, bin=False):
 
     # src_image = blur_image(src_image)
 
@@ -77,9 +77,16 @@ def apply_threshold(src_image):
     #               cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
     #               cv2.THRESH_BINARY_INV,53,1)
 
-    thres_image = cv2.adaptiveThreshold(src_image, 255,
-                  cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-                  cv2.THRESH_BINARY_INV, 11, 2)
+    thres_image = None
+    if bin:
+        blur = cv2.GaussianBlur(src_image, (3, 3), 0)
+        # ret3, thres_image = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+        ret, thres_image = cv2.threshold(src_image, 127, 255, cv2.THRESH_TRUNC)
+
+    else:
+        thres_image = cv2.adaptiveThreshold(src_image, 255,
+                      cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                      cv2.THRESH_BINARY_INV, 11, 2)
 
     if display_images_flag:
         plt.imshow(thres_image, cmap='gray')
@@ -266,12 +273,17 @@ def apply_homography(raw_image, corners_src=None, corners_dst=None,
 
 
 def crop_center_image(image):
-    '''
-    We take the center 2/3 of the image of a digit and send it to the
-    classifier. This way we crop out the border.
+    """
+    This way we crop out the border by taking the center 5/7 of the image.
     We could have done floodfilling, but we do have a risk that the border has
     more pixels than the digit, or vice versa.
-    '''
+
+    Arguments:
+        image {np.array} -- image of digit
+
+    Returns:
+        [np.array] -- cropped image
+    """
 
     scale_start = 1/7
     scale_end = 6/7
@@ -281,9 +293,10 @@ def crop_center_image(image):
     start_pixel_y = int(scale_start * im_heigth)
     stop_pixel_y = int(scale_end * im_heigth)
 
+    cropped_image = image[start_pixel_y: stop_pixel_y, start_pixel_x:
+                          stop_pixel_x]
+
     debug = False
-    cropped_image = image[start_pixel_y: stop_pixel_y, start_pixel_x: stop_pixel_x]
-   
     if debug:
         print('start_pixel_x', start_pixel_x)
         print('start_pixel_y', start_pixel_y)
@@ -301,19 +314,27 @@ def crop_center_image(image):
 
 
 def remove_noise(image_digit):
-    '''
-    We apply erosion followed by dilation . This first makes the borders of the
-    white pixels thinner and thickens them again. Remember to INVERT !
+    """
+    We apply erosion followed by dilation.
     This has the effect that the background noise (which are dots) is removed.
-
     https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/
     py_imgproc/py_morphological_ops/py_morphological_ops.html
-    '''
+
+    Remember to INVERT !
+
+    Arguments:
+        image_digit {np.array} -- image of digit
+
+    Returns:
+        [np.array] -- image of digit with noise removed.
+    """
 
     image_digit = np.invert(image_digit)
     kernel = np.ones((3, 3), np.uint8)
-    # noise_free_image = cv2.morphologyEx(image_digit, cv2.MORPH_OPEN, kernel)
-    noise_free_image = cv2.erode(image_digit, kernel, iterations = 1)
+    noise_free_image = cv2.morphologyEx(image_digit, cv2.MORPH_OPEN, kernel)
+    noise_free_image = cv2.erode(image_digit, kernel, iterations = 2)
+    # noise_free_image = cv2.dilate(image_digit, kernel, iterations = 1)
+
     display_images_flag = True
     if display_images_flag:
         plt.imshow(noise_free_image, cmap='gray')
@@ -321,21 +342,22 @@ def remove_noise(image_digit):
         plt.show()
 
     noise_free_image = np.invert(noise_free_image)
-    return noise_free_image 
+    return noise_free_image
 
 
 def is_blank_digit(image_digit):
-    """ Determine whether image is a digit or blank.  
-        Apply flood filling, if the largest object is less than 1/10 of the 
-        total image, then it is considered blank.
+    """
+    Determine whether image is a digit or blank.  
+    Apply flood filling, if the largest object is less than 1/10 of the 
+    total image, then it is considered blank.
 
     Arguments:
         image_digit {np.array} -- image of digit
 
     Returns:
         [Boolean] 
-    """    
-    
+    """
+
     image_digit = apply_threshold(image_digit)
     plt.imshow(image_digit, cmap='gray')
     plt.show()
@@ -363,7 +385,21 @@ def is_blank_digit(image_digit):
 
 
 def reshape_digit_image(image, new_image_shape=(28, 28)):
-    # reshape to 28 x 28 image using homography
+    """
+    Reshape image to 28 x 28 image using homography.
+    This classifier was trained with MNIST which is 28 x 28.
+
+    Arguments:
+        image {np.array} -- image of digit to be reshaped
+
+    Keyword Arguments:
+        new_image_shape {tuple} -- In future, we might train classifier with
+        different dataset containing images of different shape 
+        (default: {(28, 28)})
+
+    Returns:
+        [np.array] -- reshaped image
+    """
 
     reshaped_image = np.zeros(new_image_shape)
     corners_dst_top_l = [0, 0]
@@ -387,18 +423,25 @@ def reshape_digit_image(image, new_image_shape=(28, 28)):
 
 
 def extract_digits(image_homog):
-    '''
+    """
     Divide image into 9 x 9 blocks,
     Do preprocessing before recognizing digits. (center image, erode)
     Apply biggest blob algorithm to find digit.
-    '''
-    
+
+    Arguments:
+        image_homog {np.array} -- image
+
+    Returns:
+        [list of lists of np.array] -- a matrix of images of digits
+    """
+
     # image_homog = apply_threshold(image_homog)
     plt.imshow(image_homog, cmap='gray')
     plt.show()
 
-    kernel = np.array([[0., 1., 0.], [1., 1., 1.], [0., 1., 0.]], np.uint8)
-    image_homog = cv2.erode(image_homog, kernel)
+    # kernel = np.array([[0., 1., 0.], [1., 1., 1.], [0., 1., 0.]], np.uint8)
+    # image_homog = cv2.dilate(image_homog, kernel)
+    # image_homog = cv2.dilate(image_homog, kernel)
     # image_digit = cv2.erode(image_homog, kernel)
 
     plt.imshow(image_homog, cmap='gray')
@@ -414,24 +457,25 @@ def extract_digits(image_homog):
             image_digit = image_homog[int((i-1)*(h/9)):int(i*(h/9)),
                                       int((j-1)*(w/9)):int(j*(w/9))]
 
-            # display 4th column
-            if j % 10 == 4:
+            # debugging
+            if j % 10 == 5 and i % 2 == 0:
                 # image_digit = cv2.erode(image_digit,kernel)
                 noise_free_digit = crop_center_image(image_digit)
-                # noise_free_digit = remove_noise(noise_free_digit)
+                noise_free_digit = remove_noise(noise_free_digit)
                 reshaped_image = reshape_digit_image(noise_free_digit)
-                
+                # reshaped_image = apply_threshold(reshaped_image, bin=True)
+
                 plt.imshow(reshaped_image, cmap='gray')
                 plt.title('reshaped image')
                 plt.show()
 
-                if is_blank_digit(reshaped_image):
-                    noise_free_digit = np.zeros(reshaped_image.shape) #blank
-                
-                else:
+                # if is_blank_digit(reshaped_image):
+                # noise_free_digit = np.zeros(reshaped_image.shape) #blank
+
+                # else:
                     # reshaped_image = reshape_digit_image(noise_free_digit)
                     # noise_free_digit = remove_noise(reshaped_image)
-                    digit_classifier.predict_number(reshaped_image)
+                digit_classifier.predict_number(reshaped_image)
 
             image_digit_row_list.append(image_digit)
 

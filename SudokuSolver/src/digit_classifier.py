@@ -1,15 +1,11 @@
-#digit classifier
-
 import tensorflow as tf
 import matplotlib.pyplot as plt
-# Importing the required Keras modules containing model and layers
 from keras.models import Sequential
 from keras.layers import Dense, Conv2D, Dropout, Flatten, MaxPooling2D
-# %matplotlib inline # Only use this if using iPython
 import pickle 
 import logging
-
-from PIL import Image
+import numpy as np
+import puzzle_extractor
 
 def main():
     logging.basicConfig()
@@ -19,21 +15,21 @@ def main():
     # logging.getLogger().setLevel(logging.INFO)
     # logging.getLogger('foo').debug('bah')
 
-    # train_classifier()
+    train_classifier()
     filename = 'models/finalized_model.sav'
-    model = load_model(filename)
+    # model = load_model(filename)
 
 
 def train_classifier():
     (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
-
 
     # Reshaping the array to 4-dims so that it can work with the Keras API
     x_train = x_train.reshape(x_train.shape[0], 28, 28, 1)
     x_test = x_test.reshape(x_test.shape[0], 28, 28, 1)
 
     input_shape = (28, 28, 1)
-    # Making sure that the values are float so that we can get decimal points after division
+    # Making sure that the values are float so that we can get decimal points
+    #  after division
     x_train = x_train.astype('float32')
     x_test = x_test.astype('float32')
     # Normalizing the RGB codes by dividing it to the max RGB value.
@@ -46,9 +42,12 @@ def train_classifier():
     y_train = y_train[:10000]
     y_test = y_test[:2000]
 
-    print('x_train shape:', x_train.shape)
-    print('Number of images in x_train', x_train.shape[0])
-    print('Number of images in x_test', x_test.shape[0])
+    image_index = 2
+
+    plt.imshow(x_test[image_index].reshape(28, 28),cmap='Greys')
+    # pred = model.predict(x_test[image_index].reshape(1, img_rows, img_cols, 1))
+    plt.show()
+    return None
 
     # Creating a Sequential Model and adding the layers
     model = Sequential()
@@ -66,45 +65,33 @@ def train_classifier():
 
     model.evaluate(x_test, y_test)
     serialize_model(model)
-    # return model
-
-    # image_index = 500
-
-    # plt.imshow(x_test[image_index].reshape(28, 28),cmap='Greys')
-    # # pred = model.predict(x_test[image_index].reshape(1, img_rows, img_cols, 1))
-    # plt.show()
-    # pred = model.predict(x_test[image_index].reshape(1, 28, 28, 1))
-
-    # print(pred.argmax())
+    return model
 
 
 def serialize_model(model):
     filename = 'models/finalized_model.sav'
     pickle.dump(model, open(filename, 'wb'))
     logging.info('model serialized')
- 
+
 
 def load_model(filename='models/finalized_model.sav'):
-# load the model from disk
+    # load the model from disk
     loaded_model = pickle.load(open(filename, 'rb'))
-    # image_index = 500
-
-    # plt.imshow(x_test[image_index].reshape(28, 28),cmap='Greys')
-    # # pred = model.predict(x_test[image_index].reshape(1, img_rows, img_cols, 1))
-    # plt.show()
-    # pred = model.predict(x_test[image_index].reshape(1, 28, 28, 1))
-
-    # print(pred.argmax())
     logging.info('model loaded')
     return loaded_model
 
 
 def predict_number(image, model=load_model()):
+    image = puzzle_extractor.apply_threshold(src_image=image, bin=True)
+    image = np.invert(image)
+    image = image.astype('float64') / 255.0
 
+    plt.imshow(image, cmap='gray')
+    plt.title('final pred')
+    plt.show()
     pred = model.predict(image.reshape(1, 28, 28, 1))
-    
-    logging.info('prediction %d',pred.argmax() )
-    # print('prdeiction: ', pred.argmax())
+    logging.info('prediction %s', pred)
+    logging.info('prediction %d', pred.argmax())
 
     return None
 
