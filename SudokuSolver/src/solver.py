@@ -1,10 +1,11 @@
-# The following program is a sudoku solver I made to learn about back tracking, and because coding is fun.
+# The following program is a sudoku solver I made to learn about back tracking,
+# and because coding is fun.
 # It is based of a video I saw on Numberphile.
 # I own nothing. Please don't sue.
-import os
-import numpy as np 
+import numpy as np
 puzzle = np.matrix(data=None)
 puzzle_2 = np.matrix(data=None)
+
 
 def read_puzzle():
     # global puzzle
@@ -38,17 +39,16 @@ def fill_in():
         for j in range(0, n):
             if puzzle[i][j] == 0:
                 for num in range(1, 10):
-                    if valid_number( puzzle, i, j, num):
+                    if valid_number(puzzle, i, j, num):
                         puzzle[i][j] = num
                         fill_in()
                         puzzle[i][j] = 0
 
-                return 
+                return
     pretty_print_puzzle(puzzle)
 
 
 def valid_number(puzzle, x, y, num):
-
     n = puzzle.shape[0]
     cell_size = int(n**0.5)
 
@@ -58,12 +58,10 @@ def valid_number(puzzle, x, y, num):
         if puzzle[i][y] == num:
             return False
 
-
     # valid column
-    for i in range(0,n):
+    for i in range(0, n):
         if puzzle[x][i] == num:
             return False
-    
 
     # 3 x 3 block - i don't believe converting to in is nec due to //?
     b_x = int(x//cell_size) * cell_size
@@ -79,7 +77,8 @@ def valid_number(puzzle, x, y, num):
 
 def unit_tests(puzzle):
     v = valid_number(puzzle, 0, 0, 4)
-    assert v == True
+    assert v is True
+
 
 def pretty_print_puzzle(puzzle):
     n = puzzle.shape[0]
@@ -90,7 +89,7 @@ def pretty_print_puzzle(puzzle):
 
         for j in range(0, n):
             if j % (n**0.5) == 0:
-                print( "|", end =" ")
+                print("|", end=" ")
 
             print(puzzle[i][j], end=" ")
 
@@ -99,5 +98,6 @@ def pretty_print_puzzle(puzzle):
 
         print("")
 
-if __name__=="__main__":
-    solve()        
+
+if __name__ == "__main__":
+    solve()

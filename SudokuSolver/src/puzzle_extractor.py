@@ -80,7 +80,8 @@ def apply_threshold(src_image, bin=False):
     thres_image = None
     if bin:
         blur = cv2.GaussianBlur(src_image, (3, 3), 0)
-        # ret3, thres_image = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+        # ret3, thres_image = cv2.threshold(blur, 0, 255,
+        # cv2.THRESH_BINARY+cv2.THRESH_OTSU)
         ret, thres_image = cv2.threshold(src_image, 127, 255, cv2.THRESH_TRUNC)
 
     else:
@@ -157,7 +158,7 @@ def find_biggest_blob(new_image):
     for i in range(h):
         for j in range(w):
             new_image[i, j] = (255 if new_image[i, j] == biggest_island else 0)
-    
+
     return new_image
 
 
@@ -228,16 +229,16 @@ def plot_corners_original(image, corners):
     plt.show()
 
 
-def apply_homography(raw_image, corners_src=None, corners_dst=None, 
-                     new_image=None):  
+def apply_homography(raw_image, corners_src=None, corners_dst=None,
+                     new_image=None):
     """Return a new image, with homography applied.
 
     Arguments:
         raw_image {np.array} -- raw image to which homography is applied.
-        corners_src {list of tuples} -- coordinates on old image 
+        corners_src {list of tuples} -- coordinates on old image
         which will form corners of new image
         corners_dst {tuple}  -- corners of new image
-        new_image {np.array} -- new array to be returned, needed for shape 
+        new_image {np.array} -- new array to be returned, needed for shape
     Returns:
         [np.array] -- resulting new image to which homography was applied.
     """
@@ -248,21 +249,21 @@ def apply_homography(raw_image, corners_src=None, corners_dst=None,
     corners_bot_r = [raw_image.shape[1], raw_image.shape[0]]
     corners_bot_l = [0, raw_image.shape[0]]
     corners = [corners_top_l, corners_top_r, corners_bot_r, corners_bot_l]
-    
-    if corners_dst == None:
+
+    if corners_dst is None:
         # this is the case when the grid is extracted from the image.
         corners_dst = corners
         h, _ = cv2.findHomography(np.array(corners_src), np.array(corners_dst))
         image_homog = cv2.warpPerspective(raw_image, h, (raw_image.shape[1],
                       raw_image.shape[0]))
 
-    if corners_src == None:
+    if corners_src is None:
         # this is the case when digits are to be reshaped to 28 x 28 images.
         corners_src = corners
         h, _ = cv2.findHomography(np.array(corners_src), np.array(corners_dst))
         image_homog = cv2.warpPerspective(raw_image, h, (new_image.shape[1],
                       new_image.shape[0]))
-                    
+
     if display_images_flag:
         plt.imshow(image_homog, cmap='gray')
         plt.title("applied homography")
@@ -303,7 +304,8 @@ def crop_center_image(image):
         print('stop_pixel_x', stop_pixel_x)
         print('stop_pixel_y', stop_pixel_y)
         print('cropped shape:', cropped_image.shape)
-        print('expected shape: ', (stop_pixel_y - start_pixel_y), (stop_pixel_x - start_pixel_x)  )
+        print('expected shape: ', (stop_pixel_y - start_pixel_y),
+             (stop_pixel_x - start_pixel_x))
 
     if display_images_flag:
         plt.imshow(cropped_image)
@@ -332,7 +334,7 @@ def remove_noise(image_digit):
     image_digit = np.invert(image_digit)
     kernel = np.ones((3, 3), np.uint8)
     noise_free_image = cv2.morphologyEx(image_digit, cv2.MORPH_OPEN, kernel)
-    noise_free_image = cv2.erode(image_digit, kernel, iterations = 2)
+    noise_free_image = cv2.erode(image_digit, kernel, iterations=2)
     # noise_free_image = cv2.dilate(image_digit, kernel, iterations = 1)
 
     display_images_flag = True
@@ -347,15 +349,15 @@ def remove_noise(image_digit):
 
 def is_blank_digit(image_digit):
     """
-    Determine whether image is a digit or blank.  
-    Apply flood filling, if the largest object is less than 1/10 of the 
+    Determine whether image is a digit or blank.
+    Apply flood filling, if the largest object is less than 1/10 of the
     total image, then it is considered blank.
 
     Arguments:
         image_digit {np.array} -- image of digit
 
     Returns:
-        [Boolean] 
+        [Boolean]
     """
 
     image_digit = apply_threshold(image_digit)
@@ -369,7 +371,7 @@ def is_blank_digit(image_digit):
         _, biggest_island_size = sorted(z, key=lambda pair: pair[1])[-2]
 
     except Exception as e:
-    #  out of bounds, which means blank
+        # out of bounds, which means blank
         biggest_island_size = 0
 
     print('island size', biggest_island_size, 'np.prod(new_image.shape)',
@@ -394,7 +396,7 @@ def reshape_digit_image(image, new_image_shape=(28, 28)):
 
     Keyword Arguments:
         new_image_shape {tuple} -- In future, we might train classifier with
-        different dataset containing images of different shape 
+        different dataset containing images of different shape
         (default: {(28, 28)})
 
     Returns:
@@ -411,7 +413,7 @@ def reshape_digit_image(image, new_image_shape=(28, 28)):
                   corners_dst_bot_l]
 
     reshaped_image = apply_homography(image, corners_src=None,
-                                      corners_dst=corners_dst, 
+                                      corners_dst=corners_dst,
                                       new_image=reshaped_image)
 
     if display_images_flag:
