@@ -1,17 +1,16 @@
-'''
+"""
     This program is based of a tutorial on how to make a sudoku scanner.
     I started this project to learn more about OpenCV and Tensorflow.
     Because coding is fun. I own nothing. Don't sue me.
-'''
+"""
 
 import cv2
-import numpy as np
-import matplotlib.pyplot as plt
-import time
-import operator
-import sys
 import digit_classifier
 import logging
+import matplotlib.pyplot as plt
+import numpy as np
+import operator
+import sys
 
 display_images_flag = False
 debug = True
@@ -49,7 +48,7 @@ def read_image():
 
     if display_images_flag:
 
-        plt.imshow(image, cmap='gray')
+        plt.imshow(image, cmap="gray")
         plt.title("original image")
         plt.show()
 
@@ -61,7 +60,7 @@ def blur_image(src_image):
     blurred_image = cv2.GaussianBlur(src_image, (15, 15), 1)
 
     if display_images_flag:
-        plt.imshow(blurred_image, cmap='gray')
+        plt.imshow(blurred_image, cmap="gray")
         plt.title("blurred image")
         plt.show()
 
@@ -79,34 +78,44 @@ def apply_threshold(src_image, bin=False):
 
     thres_image = None
     if bin:
+        # kernel = np.ones((3, 3), np.uint8)
         blur = cv2.GaussianBlur(src_image, (3, 3), 0)
         # ret3, thres_image = cv2.threshold(blur, 0, 255,
         # cv2.THRESH_BINARY+cv2.THRESH_OTSU)
-        ret, thres_image = cv2.threshold(src_image, 127, 255, cv2.THRESH_TRUNC)
+        ret, thres_image = cv2.threshold(
+            blur, thresh=0, maxval=127, type=cv2.THRESH_BINARY_INV
+        )
+        # thres_image = cv2.erode(kernel, thres_image)
+        thres_image = np.invert(thres_image)
 
     else:
-        thres_image = cv2.adaptiveThreshold(src_image, 255,
-                      cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-                      cv2.THRESH_BINARY_INV, 11, 2)
-
+        thres_image = cv2.adaptiveThreshold(
+            src_image,
+            255,
+            cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+            cv2.THRESH_BINARY_INV,
+            11,
+            2,
+        )
+    display_images_flag = True
     if display_images_flag:
-        plt.imshow(thres_image, cmap='gray')
-        plt.title("thresholded image")
+        plt.imshow(thres_image, cmap="gray")
+        plt.title("thresholded image 11")
         plt.show()
 
     return thres_image
 
 
 def find_grid(image):
-    '''
-    apply a blob detecting algorithm. In this case floodfilling.
-    '''
+    """apply a blob detecting algorithm. In this case floodfilling.
+
+    """
 
     new_image = flood_filling(image)
     grid_image = find_biggest_blob(new_image)
 
     if display_images_flag:
-        plt.imshow(grid_image, cmap='gray')
+        plt.imshow(grid_image, cmap="gray")
         plt.title("Extracted grid")
         plt.show()
 
@@ -114,7 +123,7 @@ def find_grid(image):
 
 
 def flood_filling(image):
-    # TODO: fix exception, find better (more efficient) way to apply
+    # TODO(fix): fix exception, find better (more efficient) way to apply
     # floodfilling.
     # Returns all islands of pixels, where all islands have different numbers.
 
@@ -123,8 +132,8 @@ def flood_filling(image):
     counter = 0
     s = []
 
-    for i in range(1, h-1):
-        for j in range(1, w-1):
+    for i in range(1, h - 1):
+        for j in range(1, w - 1):
 
             if image[i, j] == 255 and new_image[i, j] == 0:
                 counter += 1
@@ -144,53 +153,77 @@ def flood_filling(image):
     return new_image
 
 
-def find_biggest_blob(new_image):
-    # finds the longest continuous set of pixels. Each contiuous (touching) set
-    # of pixels is called an island.
+def find_biggest_blob(new_image, largest_island=2):
+
+    """Finds the longest continuous (touching) set of pixels.
+
+    Arguments:
+        new_image {np.array} -- image in which each continuous set of pixels
+                                is a unique number (a set of continuous pixels
+                                can be thought of as a unique island).
+
+    Keyword Arguments:
+        largest_island {int} -- originally the function was only used to find
+                                the grid, which was the 2nd largest shape on
+                                the image, after the background.
+                                (default: {2})
+
+    Returns:
+        [np.array] -- the image only containing the biggest blob.
+    """
 
     h, w = new_image.shape
     unique, counts = np.unique(new_image, return_counts=True)
     z = zip(unique, counts)
-    biggest_island = sorted(z, key=lambda pair: pair[1])[-2][0]
+    biggest_island = sorted(z, key=lambda pair: pair[1])[-largest_island][0]
     # 2nd last element, 1st value
 
     # convert to new_image to only contain biggest island number.
     for i in range(h):
         for j in range(w):
-            new_image[i, j] = (255 if new_image[i, j] == biggest_island else 0)
+            new_image[i, j] = 255 if new_image[i, j] == biggest_island else 0
 
     return new_image
 
 
 def search(i, j, s):
-    s.append((i-1, j))
-    s.append((i+1, j))
-    s.append((i, j+1))
-    s.append((i, j-1))
+    s.append((i - 1, j))
+    s.append((i + 1, j))
+    s.append((i, j + 1))
+    s.append((i, j - 1))
 
 
 def corner_detection(image):
 
     # The picture has to be in uint8 format. It was in float64.
-    image_contour = image.astype('uint8') * 255
+    image_contour = image.astype("uint8") * 255
 
-    contours, _ = cv2.findContours(image_contour, cv2.RETR_LIST,
-                                   cv2.CHAIN_APPROX_SIMPLE)
+    contours, _ = cv2.findContours(
+        image_contour, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE
+    )
     contours = sorted(contours, key=cv2.contourArea, reverse=True)
     largest_contour = contours[0]
 
     # detect index of corners in largest_contour
-    bottom_right_indx, _ = max(enumerate([pt[0][0] + pt[0][1] for pt in
-                               largest_contour]), key=operator.itemgetter(1))
+    bottom_right_indx, _ = max(
+        enumerate([pt[0][0] + pt[0][1] for pt in largest_contour]),
+        key=operator.itemgetter(1),
+    )
 
-    top_left_indx, _ = min(enumerate([pt[0][0] + pt[0][1] for pt in
-                           largest_contour]), key=operator.itemgetter(1))
+    top_left_indx, _ = min(
+        enumerate([pt[0][0] + pt[0][1] for pt in largest_contour]),
+        key=operator.itemgetter(1),
+    )
 
-    bottom_left_indx, _ = min(enumerate([pt[0][0] - pt[0][1] for pt in
-                              largest_contour]), key=operator.itemgetter(1))
+    bottom_left_indx, _ = min(
+        enumerate([pt[0][0] - pt[0][1] for pt in largest_contour]),
+        key=operator.itemgetter(1),
+    )
 
-    top_right_indx, _ = max(enumerate([pt[0][0] - pt[0][1] for pt in
-                            largest_contour]), key=operator.itemgetter(1))
+    top_right_indx, _ = max(
+        enumerate([pt[0][0] - pt[0][1] for pt in largest_contour]),
+        key=operator.itemgetter(1),
+    )
 
     top_left = largest_contour[top_left_indx][0]
     top_right = largest_contour[top_right_indx][0]
@@ -199,14 +232,14 @@ def corner_detection(image):
 
     if display_images_flag:
         # draw corners
-        image = np.asarray(image, 'uint8')
+        image = np.asarray(image, "uint8")
         image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
         cv2.circle(image, tuple(bottom_right), 8, (255, 0, 0), -1)
         cv2.circle(image, tuple(top_left), 8, (255, 0, 0), -1)
         cv2.circle(image, tuple(bottom_left), 8, (255, 0, 0), -1)
         cv2.circle(image, tuple(top_right), 8, (255, 0, 0), -1)
         plt.imshow(image)
-        plt.title('corners detected')
+        plt.title("corners detected")
         plt.show()
 
     corners = [top_left, top_right, bottom_left, bottom_right]
@@ -218,19 +251,20 @@ def plot_corners_original(image, corners):
 
     top_left, top_right, bottom_left, bottom_right = corners
 
-    image = np.asarray(image, 'uint8')
+    image = np.asarray(image, "uint8")
     image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
     cv2.circle(image, tuple(bottom_right), 8, (0, 0, 255), -1)
     cv2.circle(image, tuple(top_left), 8, (0, 255, 0), -1)
     cv2.circle(image, tuple(bottom_left), 8, (0, 0, 0), -1)
     cv2.circle(image, tuple(top_right), 8, (255, 0, 0), -1)
     plt.imshow(image)
-    plt.title('corners detected')
+    plt.title("corners detected")
     plt.show()
 
 
-def apply_homography(raw_image, corners_src=None, corners_dst=None,
-                     new_image=None):
+def apply_homography(
+    raw_image, corners_src=None, corners_dst=None, new_image=None
+):
     """Return a new image, with homography applied.
 
     Arguments:
@@ -239,11 +273,13 @@ def apply_homography(raw_image, corners_src=None, corners_dst=None,
         which will form corners of new image
         corners_dst {tuple}  -- corners of new image
         new_image {np.array} -- new array to be returned, needed for shape
+
     Returns:
         [np.array] -- resulting new image to which homography was applied.
     """
 
-    # (idea is that the grid spans the entire new image, so technically shape stays the same
+    # (idea is that the grid spans the entire new image, so technically shape
+    # stays the same
     corners_top_l = [0, 0]
     corners_top_r = [raw_image.shape[1], 0]
     corners_bot_r = [raw_image.shape[1], raw_image.shape[0]]
@@ -254,28 +290,30 @@ def apply_homography(raw_image, corners_src=None, corners_dst=None,
         # this is the case when the grid is extracted from the image.
         corners_dst = corners
         h, _ = cv2.findHomography(np.array(corners_src), np.array(corners_dst))
-        image_homog = cv2.warpPerspective(raw_image, h, (raw_image.shape[1],
-                      raw_image.shape[0]))
+        image_homog = cv2.warpPerspective(
+            raw_image, h, (raw_image.shape[1], raw_image.shape[0])
+        )
 
     if corners_src is None:
         # this is the case when digits are to be reshaped to 28 x 28 images.
         corners_src = corners
         h, _ = cv2.findHomography(np.array(corners_src), np.array(corners_dst))
-        image_homog = cv2.warpPerspective(raw_image, h, (new_image.shape[1],
-                      new_image.shape[0]))
+        image_homog = cv2.warpPerspective(
+            raw_image, h, (new_image.shape[1], new_image.shape[0])
+        )
 
     if display_images_flag:
-        plt.imshow(image_homog, cmap='gray')
+        plt.imshow(image_homog, cmap="gray")
         plt.title("applied homography")
         plt.show()
 
-    logging.info('applied homography')
+    logging.info("applied homography")
     return image_homog
 
 
 def crop_center_image(image):
-    """
-    This way we crop out the border by taking the center 5/7 of the image.
+    """Crop out the border by taking the center 5/7 of the image.
+
     We could have done floodfilling, but we do have a risk that the border has
     more pixels than the digit, or vice versa.
 
@@ -286,38 +324,42 @@ def crop_center_image(image):
         [np.array] -- cropped image
     """
 
-    scale_start = 1/7
-    scale_end = 6/7
+    scale_start = 1 / 7
+    scale_end = 6 / 7
     im_heigth, im_width = image.shape
     start_pixel_x = int(scale_start * im_width)
     stop_pixel_x = int(scale_end * im_width)
     start_pixel_y = int(scale_start * im_heigth)
     stop_pixel_y = int(scale_end * im_heigth)
 
-    cropped_image = image[start_pixel_y: stop_pixel_y, start_pixel_x:
-                          stop_pixel_x]
+    cropped_image = image[
+        start_pixel_y:stop_pixel_y, start_pixel_x:stop_pixel_x
+    ]
 
     debug = False
     if debug:
-        print('start_pixel_x', start_pixel_x)
-        print('start_pixel_y', start_pixel_y)
-        print('stop_pixel_x', stop_pixel_x)
-        print('stop_pixel_y', stop_pixel_y)
-        print('cropped shape:', cropped_image.shape)
-        print('expected shape: ', (stop_pixel_y - start_pixel_y),
-             (stop_pixel_x - start_pixel_x))
+        print("start_pixel_x", start_pixel_x)
+        print("start_pixel_y", start_pixel_y)
+        print("stop_pixel_x", stop_pixel_x)
+        print("stop_pixel_y", stop_pixel_y)
+        print("cropped shape:", cropped_image.shape)
+        print(
+            "expected shape: ",
+            (stop_pixel_y - start_pixel_y),
+            (stop_pixel_x - start_pixel_x),
+        )
 
     if display_images_flag:
         plt.imshow(cropped_image)
-        plt.title('cropped_image')
+        plt.title("cropped_image")
         plt.show()
 
     return cropped_image
 
 
 def remove_noise(image_digit):
-    """
-    We apply erosion followed by dilation.
+    """We apply erosion followed by dilation.
+
     This has the effect that the background noise (which are dots) is removed.
     https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/
     py_imgproc/py_morphological_ops/py_morphological_ops.html
@@ -339,8 +381,8 @@ def remove_noise(image_digit):
 
     display_images_flag = True
     if display_images_flag:
-        plt.imshow(noise_free_image, cmap='gray')
-        plt.title('removed all noise before prediction')
+        plt.imshow(noise_free_image, cmap="gray")
+        plt.title("removed all noise before prediction")
         plt.show()
 
     noise_free_image = np.invert(noise_free_image)
@@ -348,8 +390,8 @@ def remove_noise(image_digit):
 
 
 def is_blank_digit(image_digit):
-    """
-    Determine whether image is a digit or blank.
+    """Determine whether image is a digit or blank.
+
     Apply flood filling, if the largest object is less than 1/10 of the
     total image, then it is considered blank.
 
@@ -361,8 +403,8 @@ def is_blank_digit(image_digit):
     """
 
     image_digit = apply_threshold(image_digit)
-    plt.imshow(image_digit, cmap='gray')
-    plt.show()
+    # plt.imshow(image_digit, cmap='gray')
+    # plt.show()
 
     new_image = flood_filling(image_digit)
     unique, counts = np.unique(new_image, return_counts=True)
@@ -370,25 +412,29 @@ def is_blank_digit(image_digit):
     try:
         _, biggest_island_size = sorted(z, key=lambda pair: pair[1])[-2]
 
-    except Exception as e:
+    except Exception as _:
         # out of bounds, which means blank
         biggest_island_size = 0
 
-    print('island size', biggest_island_size, 'np.prod(new_image.shape)',
-          np.prod(new_image.shape))
+    print(
+        "island size",
+        biggest_island_size,
+        "np.prod(new_image.shape)",
+        np.prod(new_image.shape),
+    )
 
-    if biggest_island_size > np.prod(new_image.shape) * 1/12:
-        print('not blank')
+    if biggest_island_size > np.prod(new_image.shape) * 1 / 12:
+        print("not blank")
         return False
 
     else:
-        print('blank')
+        print("blank")
         return True
 
 
 def reshape_digit_image(image, new_image_shape=(28, 28)):
-    """
-    Reshape image to 28 x 28 image using homography.
+    """Reshape image to 28 x 28 image using homography.
+
     This classifier was trained with MNIST which is 28 x 28.
 
     Arguments:
@@ -396,8 +442,8 @@ def reshape_digit_image(image, new_image_shape=(28, 28)):
 
     Keyword Arguments:
         new_image_shape {tuple} -- In future, we might train classifier with
-        different dataset containing images of different shape
-        (default: {(28, 28)})
+                                   different dataset containing images of
+                                   different shape (default: {(28, 28)})
 
     Returns:
         [np.array] -- reshaped image
@@ -409,25 +455,32 @@ def reshape_digit_image(image, new_image_shape=(28, 28)):
     corners_dst_bot_r = [reshaped_image.shape[1], reshaped_image.shape[0]]
     corners_dst_bot_l = [0, reshaped_image.shape[0]]
 
-    corners_dst = [corners_dst_top_l, corners_dst_top_r, corners_dst_bot_r,
-                  corners_dst_bot_l]
+    corners_dst = [
+        corners_dst_top_l,
+        corners_dst_top_r,
+        corners_dst_bot_r,
+        corners_dst_bot_l,
+    ]
 
-    reshaped_image = apply_homography(image, corners_src=None,
-                                      corners_dst=corners_dst,
-                                      new_image=reshaped_image)
+    reshaped_image = apply_homography(
+        image,
+        corners_src=None,
+        corners_dst=corners_dst,
+        new_image=reshaped_image,
+    )
 
     if display_images_flag:
         plt.imshow(reshaped_image)
-        plt.title('reshaped_image')
+        plt.title("reshaped_image")
         plt.show()
 
     return reshaped_image
 
 
 def extract_digits(image_homog):
-    """
-    Divide image into 9 x 9 blocks,
-    Do preprocessing before recognizing digits. (center image, erode)
+    """Divide image into 9 x 9 blocks,
+
+    We do preprocessing before recognizing digits. (center image, erode)
     Apply biggest blob algorithm to find digit.
 
     Arguments:
@@ -438,15 +491,13 @@ def extract_digits(image_homog):
     """
 
     # image_homog = apply_threshold(image_homog)
-    plt.imshow(image_homog, cmap='gray')
-    plt.show()
 
     # kernel = np.array([[0., 1., 0.], [1., 1., 1.], [0., 1., 0.]], np.uint8)
     # image_homog = cv2.dilate(image_homog, kernel)
     # image_homog = cv2.dilate(image_homog, kernel)
     # image_digit = cv2.erode(image_homog, kernel)
 
-    plt.imshow(image_homog, cmap='gray')
+    plt.imshow(image_homog, cmap="gray")
     plt.show()
 
     h, w = image_homog.shape
@@ -456,28 +507,32 @@ def extract_digits(image_homog):
         image_digit_row_list = []
 
         for j in range(1, 10):
-            image_digit = image_homog[int((i-1)*(h/9)):int(i*(h/9)),
-                                      int((j-1)*(w/9)):int(j*(w/9))]
+            image_digit = image_homog[
+                int((i - 1) * (h / 9)):int(i * (h / 9)),
+                int((j - 1) * (w / 9)):int(j * (w / 9)),
+            ]
 
             # debugging
-            if j % 10 == 5 and i % 2 == 0:
+            if j % 9 == 0:
                 # image_digit = cv2.erode(image_digit,kernel)
                 noise_free_digit = crop_center_image(image_digit)
                 noise_free_digit = remove_noise(noise_free_digit)
                 reshaped_image = reshape_digit_image(noise_free_digit)
+
                 # reshaped_image = apply_threshold(reshaped_image, bin=True)
 
-                plt.imshow(reshaped_image, cmap='gray')
-                plt.title('reshaped image')
-                plt.show()
+                if is_blank_digit(reshaped_image):
+                    noise_free_digit = np.zeros(reshaped_image.shape)  # blank
 
-                # if is_blank_digit(reshaped_image):
-                # noise_free_digit = np.zeros(reshaped_image.shape) #blank
-
-                # else:
+                else:
+                    thresholded_image = np.invert(reshaped_image)
+                    thresholded_image = apply_threshold(
+                        thresholded_image, bin=True
+                    )
                     # reshaped_image = reshape_digit_image(noise_free_digit)
                     # noise_free_digit = remove_noise(reshaped_image)
-                digit_classifier.predict_number(reshaped_image)
+                    digit_classifier.predict_number(thresholded_image)
+                # exit(0)
 
             image_digit_row_list.append(image_digit)
 

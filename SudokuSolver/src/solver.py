@@ -3,6 +3,7 @@
 # It is based of a video I saw on Numberphile.
 # I own nothing. Please don't sue.
 import numpy as np
+
 puzzle = np.matrix(data=None)
 puzzle_2 = np.matrix(data=None)
 
@@ -50,7 +51,7 @@ def fill_in():
 
 def valid_number(puzzle, x, y, num):
     n = puzzle.shape[0]
-    cell_size = int(n**0.5)
+    cell_size = int(n ** 0.5)
 
     assert num != 0
     # valid row
@@ -64,8 +65,8 @@ def valid_number(puzzle, x, y, num):
             return False
 
     # 3 x 3 block - i don't believe converting to in is nec due to //?
-    b_x = int(x//cell_size) * cell_size
-    b_y = int(y//cell_size) * cell_size
+    b_x = int(x // cell_size) * cell_size
+    b_y = int(y // cell_size) * cell_size
 
     for i in range(0, 3):
         for j in range(0, 3):
@@ -88,12 +89,12 @@ def pretty_print_puzzle(puzzle):
     for i in range(0, n):
 
         for j in range(0, n):
-            if j % (n**0.5) == 0:
+            if j % (n ** 0.5) == 0:
                 print("|", end=" ")
 
             print(puzzle[i][j], end=" ")
 
-        if i % (n**0.5) == (n**0.5) - 1:
+        if i % (n ** 0.5) == (n ** 0.5) - 1:
             print("\n  _ _ _   _ _ _   _ _ _")
 
         print("")

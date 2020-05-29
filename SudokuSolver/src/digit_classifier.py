@@ -1,23 +1,27 @@
-import tensorflow as tf
-import matplotlib.pyplot as plt
+from keras.layers import Conv2D
+from keras.layers import Dense
+from keras.layers import Dropout
+from keras.layers import Flatten
+from keras.layers import MaxPooling2D
 from keras.models import Sequential
-from keras.layers import Dense, Conv2D, Dropout, Flatten, MaxPooling2D
-import pickle
 import logging
+import matplotlib.pyplot as plt
 import numpy as np
+import pickle
 import puzzle_extractor
+import tensorflow as tf
 
 
 def main():
     logging.basicConfig()
     logging.getLogger().setLevel(logging.DEBUG)
-    tf.get_logger().setLevel('INFO')
+    tf.get_logger().setLevel("INFO")
     # logging.getLogger('foo').debug('bah')
     # logging.getLogger().setLevel(logging.INFO)
     # logging.getLogger('foo').debug('bah')
 
     train_classifier()
-    filename = 'models/finalized_model.sav'
+    filename = "models/finalized_model.sav"
     model = load_model(filename)
 
 
@@ -31,8 +35,8 @@ def train_classifier():
     input_shape = (28, 28, 1)
     # Making sure that the values are float so that we can get decimal points
     #  after division
-    x_train = x_train.astype('float32')
-    x_test = x_test.astype('float32')
+    x_train = x_train.astype("float32")
+    x_test = x_test.astype("float32")
     # Normalizing the RGB codes by dividing it to the max RGB value.
     x_train /= 255
     x_test /= 255
@@ -45,7 +49,7 @@ def train_classifier():
 
     image_index = 2
 
-    plt.imshow(x_test[image_index].reshape(28, 28), cmap='Greys')
+    plt.imshow(x_test[image_index].reshape(28, 28), cmap="Greys")
     plt.show()
     return None
 
@@ -58,9 +62,9 @@ def train_classifier():
     model.add(Dropout(0.2))
     model.add(Dense(10, activation=tf.nn.softmax))
 
-    model.compile(optimizer='adam',
-              loss='sparse_categorical_crossentropy',
-              metrics=['accuracy'])
+    model.compile(
+        optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"]
+    )
     model.fit(x=x_train, y=y_train, epochs=10)
 
     model.evaluate(x_test, y_test)
@@ -69,29 +73,29 @@ def train_classifier():
 
 
 def serialize_model(model):
-    filename = 'models/finalized_model.sav'
-    pickle.dump(model, open(filename, 'wb'))
-    logging.info('model serialized')
+    filename = "models/finalized_model.sav"
+    pickle.dump(model, open(filename, "wb"))
+    logging.info("model serialized")
 
 
-def load_model(filename='models/finalized_model.sav'):
+def load_model(filename="models/finalized_model.sav"):
     # load the model from disk
-    loaded_model = pickle.load(open(filename, 'rb'))
-    logging.info('model loaded')
+    loaded_model = pickle.load(open(filename, "rb"))
+    logging.info("model loaded")
     return loaded_model
 
 
 def predict_number(image, model=load_model()):
-    image = puzzle_extractor.apply_threshold(src_image=image, bin=True)
+    # image = puzzle_extractor.apply_threshold(src_image=image, bin=True)
     image = np.invert(image)
-    image = image.astype('float64') / 255.0
+    image = image.astype("float64") / 255.0
 
-    plt.imshow(image, cmap='gray')
-    plt.title('final pred')
+    plt.imshow(image, cmap="gray")
+    plt.title("final pred")
     plt.show()
     pred = model.predict(image.reshape(1, 28, 28, 1))
-    logging.info('prediction %s', pred)
-    logging.info('prediction %d', pred.argmax())
+    logging.info("prediction %s", pred)
+    logging.info("prediction %d", pred.argmax())
 
     return None
 
