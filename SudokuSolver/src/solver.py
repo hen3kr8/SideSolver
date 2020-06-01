@@ -92,7 +92,7 @@ def pretty_print_puzzle(puzzle):
             if j % (n ** 0.5) == 0:
                 print("|", end=" ")
 
-            print(puzzle[i][j], end=" ")
+            print(int(puzzle[i][j]), end=" ")
 
         if i % (n ** 0.5) == (n ** 0.5) - 1:
             print("\n  _ _ _   _ _ _   _ _ _")

@@ -87,17 +87,17 @@ def load_model(filename="models/finalized_model.sav"):
 
 def predict_number(image, model=load_model()):
     # image = puzzle_extractor.apply_threshold(src_image=image, bin=True)
-    image = np.invert(image)
+    # image = np.invert(image)
     image = image.astype("float64") / 255.0
 
-    plt.imshow(image, cmap="gray")
-    plt.title("final pred")
-    plt.show()
+    # plt.imshow(image, cmap="gray")
+    # plt.title("final pred")
+    # plt.show()
     pred = model.predict(image.reshape(1, 28, 28, 1))
     logging.info("prediction %s", pred)
     logging.info("prediction %d", pred.argmax())
 
-    return None
+    return pred.argmax()
 
 
 if __name__ == "__main__":

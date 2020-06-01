@@ -10,6 +10,7 @@ import logging
 import matplotlib.pyplot as plt
 import numpy as np
 import operator
+import solver
 import sys
 
 display_images_flag = False
@@ -26,7 +27,7 @@ if debug:
 def build_grid():
     raw_image = read_image()
     thres_image = apply_threshold(raw_image)
-    grid = find_grid(thres_image)
+    grid = find_largest_object(thres_image)
     corners = corner_detection(grid)
 
     if display_images_flag:
@@ -36,7 +37,10 @@ def build_grid():
     image_homog = apply_homography(raw_image, corners_src=corners)
 
     # extract digits
-    extract_digits(image_homog)
+    image_digit_list = extract_digits(image_homog)
+
+    # process digits
+    process_digit_images_before_classification(image_digit_list)
 
     pass
 
@@ -97,7 +101,6 @@ def apply_threshold(src_image, bin=False):
             11,
             2,
         )
-    display_images_flag = True
     if display_images_flag:
         plt.imshow(thres_image, cmap="gray")
         plt.title("thresholded image 11")
@@ -106,7 +109,7 @@ def apply_threshold(src_image, bin=False):
     return thres_image
 
 
-def find_grid(image):
+def find_largest_object(image):
     """apply a blob detecting algorithm. In this case floodfilling.
 
     """
@@ -262,9 +265,7 @@ def plot_corners_original(image, corners):
     plt.show()
 
 
-def apply_homography(
-    raw_image, corners_src=None, corners_dst=None, new_image=None
-):
+def apply_homography(raw_image, corners_src=None, corners_dst=None, new_image=None):
     """Return a new image, with homography applied.
 
     Arguments:
@@ -332,9 +333,7 @@ def crop_center_image(image):
     start_pixel_y = int(scale_start * im_heigth)
     stop_pixel_y = int(scale_end * im_heigth)
 
-    cropped_image = image[
-        start_pixel_y:stop_pixel_y, start_pixel_x:stop_pixel_x
-    ]
+    cropped_image = image[start_pixel_y:stop_pixel_y, start_pixel_x:stop_pixel_x]
 
     debug = False
     if debug:
@@ -348,7 +347,7 @@ def crop_center_image(image):
             (stop_pixel_y - start_pixel_y),
             (stop_pixel_x - start_pixel_x),
         )
-
+    # display_images_flag = True
     if display_images_flag:
         plt.imshow(cropped_image)
         plt.title("cropped_image")
@@ -401,10 +400,6 @@ def is_blank_digit(image_digit):
     Returns:
         [Boolean]
     """
-
-    image_digit = apply_threshold(image_digit)
-    # plt.imshow(image_digit, cmap='gray')
-    # plt.show()
 
     new_image = flood_filling(image_digit)
     unique, counts = np.unique(new_image, return_counts=True)
@@ -463,12 +458,9 @@ def reshape_digit_image(image, new_image_shape=(28, 28)):
     ]
 
     reshaped_image = apply_homography(
-        image,
-        corners_src=None,
-        corners_dst=corners_dst,
-        new_image=reshaped_image,
+        image, corners_src=None, corners_dst=corners_dst, new_image=reshaped_image,
     )
-
+    display_images_flag = False
     if display_images_flag:
         plt.imshow(reshaped_image)
         plt.title("reshaped_image")
@@ -508,31 +500,9 @@ def extract_digits(image_homog):
 
         for j in range(1, 10):
             image_digit = image_homog[
-                int((i - 1) * (h / 9)):int(i * (h / 9)),
-                int((j - 1) * (w / 9)):int(j * (w / 9)),
+                int((i - 1) * (h / 9)) : int(i * (h / 9)),
+                int((j - 1) * (w / 9)) : int(j * (w / 9)),
             ]
-
-            # debugging
-            if j % 9 == 0:
-                # image_digit = cv2.erode(image_digit,kernel)
-                noise_free_digit = crop_center_image(image_digit)
-                noise_free_digit = remove_noise(noise_free_digit)
-                reshaped_image = reshape_digit_image(noise_free_digit)
-
-                # reshaped_image = apply_threshold(reshaped_image, bin=True)
-
-                if is_blank_digit(reshaped_image):
-                    noise_free_digit = np.zeros(reshaped_image.shape)  # blank
-
-                else:
-                    thresholded_image = np.invert(reshaped_image)
-                    thresholded_image = apply_threshold(
-                        thresholded_image, bin=True
-                    )
-                    # reshaped_image = reshape_digit_image(noise_free_digit)
-                    # noise_free_digit = remove_noise(reshaped_image)
-                    digit_classifier.predict_number(thresholded_image)
-                # exit(0)
 
             image_digit_row_list.append(image_digit)
 
@@ -541,8 +511,123 @@ def extract_digits(image_homog):
     return image_digit_list
 
 
+def process_digit_images_before_classification(image_digit_list):
+    """Remove grid border, reshape/crop digit, remove noise via floodfilling.
+    
+    0. Crop border
+    1. Apply floodfilling to find digit - this removes all noise
+    2. Center image using result from 1.
+    3. Reshape using homography
+
+    Arguments:
+        image_digit_list {list of list of np.array} -- 9 x 9 list of lists, each containing an image of a digit
+    
+    Return:
+        {list of list of np.array} -- processed, de-noised images
+    """
+
+    display_images_flag = False
+    predicted_digits = np.zeros((9, 9))
+
+    for i in range(0, 9):
+        for j in range(0, 9):
+            image_digit = image_digit_list[i][j]
+            predicted_digit = 0
+
+            # if j % 10 == 7 and i == 0:
+            if display_images_flag:
+                plt.imshow(image_digit)
+                plt.title("image_digit")
+                plt.show()
+
+            cropped_image = crop_center_image(image_digit)
+            # apply thres to image
+            thres_image = apply_threshold(cropped_image)
+            digit = find_largest_object(thres_image)
+            kernel = np.array(
+                [[0.0, 1.0, 0.0], [1.0, 1.0, 1.0], [0.0, 1.0, 0.0]], np.uint8
+            )
+
+            flood_filled_image = cv2.morphologyEx(digit, cv2.MORPH_CLOSE, kernel)
+
+            if display_images_flag:
+                plt.imshow(flood_filled_image)
+                plt.title("flood_filled_image")
+                plt.show()
+
+            if is_blank_digit(flood_filled_image):
+                noise_free_digit = np.zeros(flood_filled_image.shape)  # blank
+
+            else:
+                centered_digit = center_image(flood_filled_image, cropped_image)
+                centered_digit = cv2.erode(centered_digit, kernel)
+                reshaped_image = reshape_digit_image(centered_digit)
+
+                predicted_digit = digit_classifier.predict_number(reshaped_image)
+
+                predicted_digits[i][j] = predicted_digit
+
+    logging.info("done classifying all digits")
+    solver.pretty_print_puzzle(predicted_digits)
+
+    return predicted_digits
+
+
 def invert(image):
     return np.invert(image)
+
+
+def center_image(flood_filled_image, cropped_image):
+    # find center in floodfilled
+    display_images_flag = False
+    h, w = flood_filled_image.shape
+
+    # the below code shows which rows and columns are completely blank and can
+    # be removed
+    rows_containing_digit = np.sum(flood_filled_image, axis=1)
+    cols_containing_digit = np.sum(flood_filled_image, axis=0)
+
+    new_image = np.zeros(shape=(flood_filled_image.shape))
+
+    # map digit from original image to a new image (thus ignoring noise)
+    for i in range(0, h):
+        for j in range(0, w):
+            if flood_filled_image[i, j] == 255:
+                new_image[i, j] = cropped_image[i, j]
+
+    if display_images_flag:
+        plt.imshow(new_image)
+        plt.title("new_image")
+        plt.show()
+
+    # remove blank lines
+    rows_to_remove = [i for (i, v) in enumerate(rows_containing_digit) if v == 0]
+    cols_to_remove = [i for (i, v) in enumerate(cols_containing_digit) if v == 0]
+
+    centered_image = np.delete(new_image, rows_to_remove, axis=0)
+    centered_image = np.delete(centered_image, cols_to_remove, axis=1)
+
+    logging.info("Empty lines removed")
+    if display_images_flag:
+        plt.imshow(centered_image, cmap="gray")
+        plt.title("centered_image")
+        plt.show()
+
+    # add padding
+    row_padding = np.zeros(shape=(5, centered_image.shape[1]))
+    centered_image = np.concatenate((row_padding, centered_image), axis=0)
+    centered_image = np.concatenate((centered_image, row_padding), axis=0)
+
+    col_padding = np.zeros(shape=(centered_image.shape[0], 5))
+    centered_image = np.concatenate((col_padding, centered_image), axis=1)
+    centered_image = np.concatenate((centered_image, col_padding), axis=1)
+
+    logging.info("padding added")
+    return centered_image
+
+
+def calculate_accuracy():
+    pass
 
 
 if __name__ == "__main__":
