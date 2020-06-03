@@ -114,6 +114,9 @@ ENV/
 env.bak/
 venv.bak/
 
+# Other files
+progress/not_git/
+
 # Spyder project settings
 .spyderproject
 .spyproject
