@@ -1,0 +1,13 @@
+INteresting progress notes:
+
+25 may:
+
+After locating the digits ( i.e cutting up the grid into 9 x 9 ) I cropped them to try remove the existing grid border.
+
+however,  The images of the digits contained noise (the area around the digit in the cell are not 100% white), as expected.
+
+The mnist dataset does not contain any background noise, hence all these noise naturally noisy images are classified as 8.
+
+
+Possible solution:
+Apply floodfilling to the cell after cropping it, hereby selecting only the digit.

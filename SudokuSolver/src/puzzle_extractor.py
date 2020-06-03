@@ -407,7 +407,7 @@ def is_blank_digit(image_digit):
     try:
         _, biggest_island_size = sorted(z, key=lambda pair: pair[1])[-2]
 
-    except Exception as _:
+    except IndexError:
         # out of bounds, which means blank
         biggest_island_size = 0
 
@@ -520,14 +520,16 @@ def process_digit_images_before_classification(image_digit_list):
     3. Reshape using homography
 
     Arguments:
-        image_digit_list {list of list of np.array} -- 9 x 9 list of lists, each containing an image of a digit
-    
+        image_digit_list {list of list of np.array} -- 9 x 9 list of lists, each
+                                                       containing an image of a digit
+
     Return:
         {list of list of np.array} -- processed, de-noised images
     """
 
     display_images_flag = False
     predicted_digits = np.zeros((9, 9))
+    kernel = np.array([[0.0, 1.0, 0.0], [1.0, 1.0, 1.0], [0.0, 1.0, 0.0]], np.uint8)
 
     for i in range(0, 9):
         for j in range(0, 9):
@@ -541,12 +543,8 @@ def process_digit_images_before_classification(image_digit_list):
                 plt.show()
 
             cropped_image = crop_center_image(image_digit)
-            # apply thres to image
             thres_image = apply_threshold(cropped_image)
             digit = find_largest_object(thres_image)
-            kernel = np.array(
-                [[0.0, 1.0, 0.0], [1.0, 1.0, 1.0], [0.0, 1.0, 0.0]], np.uint8
-            )
 
             flood_filled_image = cv2.morphologyEx(digit, cv2.MORPH_CLOSE, kernel)
 
@@ -555,17 +553,13 @@ def process_digit_images_before_classification(image_digit_list):
                 plt.title("flood_filled_image")
                 plt.show()
 
-            if is_blank_digit(flood_filled_image):
-                noise_free_digit = np.zeros(flood_filled_image.shape)  # blank
-
-            else:
+            if not is_blank_digit(flood_filled_image):
                 centered_digit = center_image(flood_filled_image, cropped_image)
                 centered_digit = cv2.erode(centered_digit, kernel)
                 reshaped_image = reshape_digit_image(centered_digit)
 
-                predicted_digit = digit_classifier.predict_number(reshaped_image)
-
-                predicted_digits[i][j] = predicted_digit
+            predicted_digit = digit_classifier.predict_number(reshaped_image)
+            predicted_digits[i][j] = predicted_digit
 
     logging.info("done classifying all digits")
     solver.pretty_print_puzzle(predicted_digits)

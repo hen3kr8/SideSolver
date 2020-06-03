@@ -6,9 +6,7 @@ from keras.layers import MaxPooling2D
 from keras.models import Sequential
 import logging
 import matplotlib.pyplot as plt
-import numpy as np
 import pickle
-import puzzle_extractor
 import tensorflow as tf
 
 
@@ -16,13 +14,7 @@ def main():
     logging.basicConfig()
     logging.getLogger().setLevel(logging.DEBUG)
     tf.get_logger().setLevel("INFO")
-    # logging.getLogger('foo').debug('bah')
-    # logging.getLogger().setLevel(logging.INFO)
-    # logging.getLogger('foo').debug('bah')
-
     train_classifier()
-    filename = "models/finalized_model.sav"
-    model = load_model(filename)
 
 
 def train_classifier():
