@@ -17,11 +17,9 @@ display_images_flag = False
 debug = True
 logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
-# tf.get_logger().setLevel('INFO')
 
 if debug:
     np.set_printoptions(threshold=sys.maxsize)
-    # logging.getLogger().setLevel(logging.DEBUG)
 
 
 def build_grid():
@@ -47,7 +45,9 @@ def build_grid():
 
 def read_image():
 
-    file_name = "../sudoku_dataset-master/images/image1081.jpg"
+    # file_name = "../sudoku_dataset-master/images/image1081.jpg"
+    file_name = "../sudoku_dataset-master/images/image1024.jpg"
+
     image = cv2.imread(file_name, cv2.IMREAD_GRAYSCALE)
 
     if display_images_flag:
@@ -73,23 +73,12 @@ def blur_image(src_image):
 
 def apply_threshold(src_image, bin=False):
 
-    # src_image = blur_image(src_image)
-
-    # adaptive gaussian
-    # thres_image = cv2.adaptiveThreshold(src_image, 255,
-    #               cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-    #               cv2.THRESH_BINARY_INV,53,1)
-
     thres_image = None
     if bin:
-        # kernel = np.ones((3, 3), np.uint8)
         blur = cv2.GaussianBlur(src_image, (3, 3), 0)
-        # ret3, thres_image = cv2.threshold(blur, 0, 255,
-        # cv2.THRESH_BINARY+cv2.THRESH_OTSU)
         ret, thres_image = cv2.threshold(
             blur, thresh=0, maxval=127, type=cv2.THRESH_BINARY_INV
         )
-        # thres_image = cv2.erode(kernel, thres_image)
         thres_image = np.invert(thres_image)
 
     else:
@@ -178,8 +167,11 @@ def find_biggest_blob(new_image, largest_island=2):
     h, w = new_image.shape
     unique, counts = np.unique(new_image, return_counts=True)
     z = zip(unique, counts)
-    biggest_island = sorted(z, key=lambda pair: pair[1])[-largest_island][0]
-    # 2nd last element, 1st value
+    try:
+        biggest_island = sorted(z, key=lambda pair: pair[1])[-largest_island][0]
+        # 2nd last element, 1st value
+    except IndexError as e:
+        logging.error("%s - Could not find digit.", e)
 
     # convert to new_image to only contain biggest island number.
     for i in range(h):
@@ -411,19 +403,18 @@ def is_blank_digit(image_digit):
         # out of bounds, which means blank
         biggest_island_size = 0
 
-    print(
-        "island size",
+    logging.debug(
+        "island size: %s np.prod(new_image.shape) %s",
         biggest_island_size,
-        "np.prod(new_image.shape)",
         np.prod(new_image.shape),
     )
 
     if biggest_island_size > np.prod(new_image.shape) * 1 / 12:
-        print("not blank")
+        logging.debug("not blank")
         return False
 
     else:
-        print("blank")
+        logging.debug("blank")
         return True
 
 
@@ -460,7 +451,7 @@ def reshape_digit_image(image, new_image_shape=(28, 28)):
     reshaped_image = apply_homography(
         image, corners_src=None, corners_dst=corners_dst, new_image=reshaped_image,
     )
-    display_images_flag = False
+    display_images_flag = True
     if display_images_flag:
         plt.imshow(reshaped_image)
         plt.title("reshaped_image")
@@ -557,8 +548,8 @@ def process_digit_images_before_classification(image_digit_list):
                 centered_digit = center_image(flood_filled_image, cropped_image)
                 centered_digit = cv2.erode(centered_digit, kernel)
                 reshaped_image = reshape_digit_image(centered_digit)
+                predicted_digit = digit_classifier.predict_number(reshaped_image)
 
-            predicted_digit = digit_classifier.predict_number(reshaped_image)
             predicted_digits[i][j] = predicted_digit
 
     logging.info("done classifying all digits")
