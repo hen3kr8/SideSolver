@@ -12,7 +12,7 @@ import tensorflow as tf
 
 def main():
     logging.basicConfig()
-    logging.getLogger().setLevel(logging.DEBUG)
+    logging.getLogger().setLevel(logging.INFO)
     tf.get_logger().setLevel("INFO")
     train_classifier()
 
@@ -86,7 +86,7 @@ def predict_number(image, model=load_model()):
     # plt.title("final pred")
     # plt.show()
     pred = model.predict(image.reshape(1, 28, 28, 1))
-    logging.info("prediction %s", pred)
+    logging.debug("prediction %s", pred)
     logging.info("prediction %d", pred.argmax())
 
     return pred.argmax()

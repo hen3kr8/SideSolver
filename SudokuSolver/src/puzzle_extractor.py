@@ -4,6 +4,7 @@
     Because coding is fun. I own nothing. Don't sue me.
 """
 
+import accuracy_reporter
 import cv2
 import digit_classifier
 import logging
@@ -38,15 +39,17 @@ def build_grid():
     image_digit_list = extract_digits(image_homog)
 
     # process digits
-    process_digit_images_before_classification(image_digit_list)
+    pred_digits = process_digit_images_before_classification(image_digit_list)
 
-    pass
+    # accuracy of puzzle
+    true_digits = accuracy_reporter.read_true_puzzle_digits(puzzle_name="image1081")
+    accuracy_reporter.calculate_accuracy(true_digits, pred_digits)
 
 
 def read_image():
 
-    # file_name = "../sudoku_dataset-master/images/image1081.jpg"
-    file_name = "../sudoku_dataset-master/images/image1024.jpg"
+    file_name = "../sudoku_dataset-master/images/image1081.jpg"
+    # file_name = "../sudoku_dataset-master/images/image1024.jpg"
 
     image = cv2.imread(file_name, cv2.IMREAD_GRAYSCALE)
 
@@ -300,7 +303,7 @@ def apply_homography(raw_image, corners_src=None, corners_dst=None, new_image=No
         plt.title("applied homography")
         plt.show()
 
-    logging.info("applied homography")
+    logging.debug("applied homography")
     return image_homog
 
 
@@ -451,7 +454,7 @@ def reshape_digit_image(image, new_image_shape=(28, 28)):
     reshaped_image = apply_homography(
         image, corners_src=None, corners_dst=corners_dst, new_image=reshaped_image,
     )
-    display_images_flag = True
+    display_images_flag = False
     if display_images_flag:
         plt.imshow(reshaped_image)
         plt.title("reshaped_image")
@@ -592,7 +595,7 @@ def center_image(flood_filled_image, cropped_image):
     centered_image = np.delete(new_image, rows_to_remove, axis=0)
     centered_image = np.delete(centered_image, cols_to_remove, axis=1)
 
-    logging.info("Empty lines removed")
+    logging.debug("Empty lines removed")
     if display_images_flag:
         plt.imshow(centered_image, cmap="gray")
         plt.title("centered_image")
@@ -607,11 +610,12 @@ def center_image(flood_filled_image, cropped_image):
     centered_image = np.concatenate((col_padding, centered_image), axis=1)
     centered_image = np.concatenate((centered_image, col_padding), axis=1)
 
-    logging.info("padding added")
+    logging.debug("padding added")
     return centered_image
 
 
 def calculate_accuracy():
+
     pass
 
 

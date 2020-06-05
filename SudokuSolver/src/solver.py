@@ -82,6 +82,8 @@ def unit_tests(puzzle):
 
 
 def pretty_print_puzzle(puzzle):
+
+    puzzle = np.asarray(puzzle)
     n = puzzle.shape[0]
 
     print("  _ _ _   _ _ _   _ _ _")
