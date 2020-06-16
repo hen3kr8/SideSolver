@@ -54,18 +54,44 @@ Traditionally we would center, erode and dilate to make sure we remove noise and
 Also, instead of changing my solution, I changed the [problem](https://wimdecoach.nl/korte-ondersteuning/the-problem-is-not-the-problem).  
 I tried a different, clearer, more modern day photo of a puzzle and it seems to work well. I'll add phots comparing the 2 datasets before and after processing.
 
+June - *MNIST problems*:
 
+So I cropped borders (to remove grid lines vissible in the digit) and send the digits to be classified by a MNIST trained CNN classifier.  
+
+
+MNIST digit]             |  Suduku digit (before centering, floodfilling)
+:-------------------------:|:-------------------------:
+![](progress/1mnist.png)  |  ![](progress/Figure_1.png)
+
+The results were terrible.  
+We got a 70 % accuracy for the entire puzzle. 56 of the 70 % was the correct clasification of blank cells. This means our **digit classification accuracy was less than 20 %**. (All digits were either classified as 1, 3 or 0)
+
+Issues with this approach:   
+
+- **MNIST is handwritten**, these digits are not.  *Surely it doesn't make a big difference*  - It does, clown. I playes with the digits make them seem more like MNIST by eroding, dilating, centering, resizing, all with minimal impact --if you find yourself having to change your data to fit the needs of your classifier, you're likely on the wrong path)    
+- **MNIST does not contain any noise** in the image. Different shades of light cause various shades of white on the Sudoku image, causing noise (which the classifier has no idea what to do with).  This was solved with floodfilling the image of the digit, thus not including anything but the digit. (This resulted in a slight improvement)  
+
+## *Solution* :  
+
+Rather simple, train the classifier on the same type of data that it will be used for/tested for.  
+In a non satire language this translates to: USE THE SUDOKU DIGITS TO TRAIN THE CLASSIFIER (**mind blows away**).  
+
+This should not be too difficult, [(I have said this far too much in my life and been utterly mistaken)](https://i.gifer.com/KzC.gif).  
+We  take the digits we have been sending to the classifier for classification, and instead put a label on them which we get from the Sudoku puzzle label, and train a classifier.
 
 
 
 ### To do:
-- Add pipeline to check ~~style~~ and unit tests. 
+- ~~Add pipeline to check style~~ (flake8)
+- ~~add formatter~~ [black](https://black.readthedocs.io/en/stable/)
+ - Add unit tests. 
 - Code coverage could be cool thing to add 
 - ~~find grid~~
 - ~~Determine locations of corners of grid~~
 - ~~Apply homography, plot grid to new image (this way we can throw away everything outside of the grid, making it easier to determine position of digits)~~
 - ~~Determine locations of digits~~
-- Identify digits
+- ~~Identify digits~~
+- Build classifier using sudoku digits
 - Map final product to array and solve
 
 - Create interface
