@@ -6,11 +6,9 @@ logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
 
 
-def read_true_puzzle_digits(
-    puzzle_name="image1", file_to_look_in="../sudoku_dataset-master/images/"
-):
+def read_true_puzzle_digits(puzzle_solution):
 
-    loc = file_to_look_in + puzzle_name + ".dat"
+    loc = puzzle_solution
     true_digits = [i.strip().split() for i in open(loc).readlines()[2:]]
 
     logging.info("REAL PUZZLE")

@@ -8,12 +8,15 @@ import logging
 import matplotlib.pyplot as plt
 import pickle
 import tensorflow as tf
+import warnings
+
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=FutureWarning)
 
 
 def main():
     logging.basicConfig()
     logging.getLogger().setLevel(logging.INFO)
-    tf.get_logger().setLevel("INFO")
     train_classifier()
 
 
@@ -71,13 +74,13 @@ def serialize_model(model):
 
 
 def load_model(filename="models/finalized_model.sav"):
-    # load the model from disk
     loaded_model = pickle.load(open(filename, "rb"))
-    logging.info("model loaded")
+    logging.debug("model loaded")
     return loaded_model
 
 
-def predict_number(image, model=load_model()):
+def predict_number(image, loaded_model=load_model()):
+
     # image = puzzle_extractor.apply_threshold(src_image=image, bin=True)
     # image = np.invert(image)
     image = image.astype("float64") / 255.0
@@ -85,9 +88,9 @@ def predict_number(image, model=load_model()):
     # plt.imshow(image, cmap="gray")
     # plt.title("final pred")
     # plt.show()
-    pred = model.predict(image.reshape(1, 28, 28, 1))
+    pred = loaded_model.predict(image.reshape(1, 28, 28, 1))
     logging.debug("prediction %s", pred)
-    logging.info("prediction %d", pred.argmax())
+    logging.debug("prediction %d", pred.argmax())
 
     return pred.argmax()
 

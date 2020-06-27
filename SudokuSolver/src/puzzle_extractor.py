@@ -14,8 +14,9 @@ import operator
 import solver
 import sys
 
-display_images_flag = True
-debug = True
+
+display_images_flag = False
+debug = False
 logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
 
@@ -23,8 +24,13 @@ if debug:
     np.set_printoptions(threshold=sys.maxsize)
 
 
-def build_grid():
-    raw_image = read_image()
+def main(
+    puzzle_image="../sudoku_dataset-master/images/image1081.jpg",
+    puzzle_solution="../sudoku_dataset-master/images/image1081.dat",
+    model="models/finalized_model.sav",
+):
+
+    raw_image = read_image(puzzle_image)
     thres_image = apply_threshold(raw_image)
     grid = find_largest_object(thres_image)
     corners = corner_detection(grid)
@@ -39,19 +45,18 @@ def build_grid():
     image_digit_list = extract_digits(image_homog)
 
     # process digits
-    pred_digits = process_digit_images_before_classification(image_digit_list)
+    pred_digits = process_digit_images_before_classification(image_digit_list, model)
 
     # accuracy of puzzle
-    true_digits = accuracy_reporter.read_true_puzzle_digits(puzzle_name="image1081")
+    true_digits = accuracy_reporter.read_true_puzzle_digits(puzzle_solution)
     accuracy_reporter.calculate_accuracy(true_digits, pred_digits)
 
 
-def read_image():
+def read_image(puzzle_image):
 
-    file_name = "../sudoku_dataset-master/images/image1081.jpg"
     # file_name = "../sudoku_dataset-master/images/image1024.jpg"
 
-    image = cv2.imread(file_name, cv2.IMREAD_GRAYSCALE)
+    image = cv2.imread(puzzle_image, cv2.IMREAD_GRAYSCALE)
 
     if display_images_flag:
 
@@ -330,7 +335,6 @@ def crop_center_image(image):
 
     cropped_image = image[start_pixel_y:stop_pixel_y, start_pixel_x:stop_pixel_x]
 
-    debug = False
     if debug:
         print("start_pixel_x", start_pixel_x)
         print("start_pixel_y", start_pixel_y)
@@ -342,7 +346,7 @@ def crop_center_image(image):
             (stop_pixel_y - start_pixel_y),
             (stop_pixel_x - start_pixel_x),
         )
-    # display_images_flag = True
+
     if display_images_flag:
         plt.imshow(cropped_image)
         plt.title("cropped_image")
@@ -371,9 +375,7 @@ def remove_noise(image_digit):
     kernel = np.ones((3, 3), np.uint8)
     noise_free_image = cv2.morphologyEx(image_digit, cv2.MORPH_OPEN, kernel)
     noise_free_image = cv2.erode(image_digit, kernel, iterations=2)
-    # noise_free_image = cv2.dilate(image_digit, kernel, iterations = 1)
 
-    display_images_flag = True
     if display_images_flag:
         plt.imshow(noise_free_image, cmap="gray")
         plt.title("removed all noise before prediction")
@@ -476,13 +478,6 @@ def extract_digits(image_homog):
         [list of lists of np.array] -- a matrix of images of digits
     """
 
-    # image_homog = apply_threshold(image_homog)
-
-    # kernel = np.array([[0., 1., 0.], [1., 1., 1.], [0., 1., 0.]], np.uint8)
-    # image_homog = cv2.dilate(image_homog, kernel)
-    # image_homog = cv2.dilate(image_homog, kernel)
-    # image_digit = cv2.erode(image_homog, kernel)
-
     plt.imshow(image_homog, cmap="gray")
     plt.show()
 
@@ -505,7 +500,7 @@ def extract_digits(image_homog):
     return image_digit_list
 
 
-def process_digit_images_before_classification(image_digit_list):
+def process_digit_images_before_classification(image_digit_list, model):
     """Remove grid border, reshape/crop digit, remove noise via floodfilling.
     
     0. Crop border
@@ -524,6 +519,7 @@ def process_digit_images_before_classification(image_digit_list):
     display_images_flag = False
     predicted_digits = np.zeros((9, 9))
     kernel = np.array([[0.0, 1.0, 0.0], [1.0, 1.0, 1.0], [0.0, 1.0, 0.0]], np.uint8)
+    loaded_model = digit_classifier.load_model(model)
 
     for i in range(0, 9):
         for j in range(0, 9):
@@ -551,7 +547,9 @@ def process_digit_images_before_classification(image_digit_list):
                 centered_digit = center_image(flood_filled_image, cropped_image)
                 centered_digit = cv2.erode(centered_digit, kernel)
                 reshaped_image = reshape_digit_image(centered_digit)
-                predicted_digit = digit_classifier.predict_number(reshaped_image)
+                predicted_digit = digit_classifier.predict_number(
+                    reshaped_image, loaded_model
+                )
 
             predicted_digits[i][j] = predicted_digit
 
@@ -620,4 +618,4 @@ def calculate_accuracy():
 
 
 if __name__ == "__main__":
-    build_grid()
+    main()
