@@ -8,12 +8,14 @@ The idea is that a user scans a photo of a puzzle into the app, and the app spit
 21 March 2020 - *Original*:  
 Started with the project. This is the original in grayscale
 
-![21 March 2020 - *Original*: Started with the project. This is the original in grayscale](progress/original.png)  
+![21 March 2020 - *Original*: Started with the project. This is the original in grayscale](progress/original.png) ![highres_original](progress/highres_original.png)
 
 22 March 2020 - *Thresholding*:  
 Played around with different thresholding methods and found adaptive gaussian to indeed work the best. (Makes everything either black or white
 
-![22 March 2020 - *Thresholding*: Played around with different thresholding methods and found adaptive gaussian to indeed work the best. (Makes everything either black or white)](progress/thresholded.png)  
+![22 March 2020 - *Thresholding*: Played around with different thresholding methods and found adaptive gaussian to indeed work the best. (Makes everything either black or white)](progress/thresholded.png) | ![highres_threshold](progress/highres_threshold.png)
+
+/home/hendrisuithouse/Prive/Side/SideSolver/progress
 
 30 March 2020 - *Floodfilling and blob detection*  
 I found OpenCV's blob function to not quite work the way I wanted (and I could not get it to work immediately #noob) so I wrote my own (it's really slow and cringy and but it works ;))
@@ -32,7 +34,7 @@ The corners can be found by iterating through the coordinates and applying some 
 
 These are the coordinates of the corners!
 
-![corners](progress/corners_original.png)    
+![corners](progress/corners_original.png) ![highres_corners](progress/highres_color_corners.png)
 
 (I tried the line detection approach - where you apply hough transformation and calculate intersection of the lines as the corners, but it seemed in some cases not all the lines of the grid were found)  
 
@@ -40,7 +42,8 @@ These are the coordinates of the corners!
 3rd May 2020 - *Homography*  
 This was much easier than corner detection. The idea behid homography is to map one plane to another. In our case we want to map the grid to an entire new image. We provide OpenCV with 4 corners from the original and 4 corners of the destination image (which is a just the corners of a blank image) and it finds the mapping. [This guy](https://www.learnopencv.com/image-alignment-feature-based-using-opencv-c-python) explains rather well how to solve the equation to find *H*, the homography from one plane to another.  
 
-![homography](progress/applied_homography.png)    
+![homography](progress/applied_homography.png) ![](progress/highres_homography.png)  
+
 (Look at that. It's beautiful)  
 
 
@@ -64,11 +67,11 @@ MNIST digit]             |  Suduku digit (before centering, floodfilling)
 ![](progress/1mnist.png)  |  ![](progress/Figure_1.png)
 
 The results were terrible.  
-We got a 70 % accuracy for the entire puzzle. 56 of the 70 % was the correct clasification of blank cells. This means our **digit classification accuracy was less than 20 %**. (All digits were either classified as 1, 3 or 0)
+We got a 70 % accuracy for the entire puzzle. 56 of the 70 % was the correct clasification of blank cells. This means our **digit classification accuracy was less than 20 %**. (All digits were either classified as 1, 7, 3 or 0) 
 
 Issues with this approach:   
 
-- **MNIST is handwritten**, these digits are not.  *Surely it doesn't make a big difference*  - It does, clown. I playes with the digits make them seem more like MNIST by eroding, dilating, centering, resizing, all with minimal impact --if you find yourself having to change your data to fit the needs of your classifier, you're likely on the wrong path)    
+- **MNIST is handwritten**, these digits are not.  *Surely it doesn't make a big difference*  - It does, clown. I played with the digits make them seem more like MNIST by eroding, dilating, centering, resizing, all with minimal impact --if you find yourself having to change your data to fit the needs of your classifier, you're likely on the wrong path)    
 - **MNIST does not contain any noise** in the image. Different shades of light cause various shades of white on the Sudoku image, causing noise (which the classifier has no idea what to do with).  This was solved with floodfilling the image of the digit, thus not including anything but the digit. (This resulted in a slight improvement)  
 
 ## *Solution* :  

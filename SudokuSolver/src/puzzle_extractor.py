@@ -14,7 +14,7 @@ import operator
 import solver
 import sys
 
-display_images_flag = False
+display_images_flag = True
 debug = True
 logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
