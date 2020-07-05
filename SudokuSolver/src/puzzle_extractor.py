@@ -1,9 +1,3 @@
-"""
-    This program is based of a tutorial on how to make a sudoku scanner.
-    I started this project to learn more about OpenCV and Tensorflow.
-    Because coding is fun. I own nothing. Don't sue me.
-"""
-
 import accuracy_reporter
 import cv2
 import digit_classifier
@@ -45,11 +39,16 @@ def main(
     image_digit_list = extract_digits(image_homog)
 
     # process digits
-    pred_digits = process_digit_images_before_classification(image_digit_list, model)
+    processed_image_digits = process_digit_images_before_classification(
+        image_digit_list
+    )
+
+    # classify digits
+    classified_digits = classify_image_digits(processed_image_digits, model)
 
     # accuracy of puzzle
     true_digits = accuracy_reporter.read_true_puzzle_digits(puzzle_solution)
-    accuracy_reporter.calculate_accuracy(true_digits, pred_digits)
+    accuracy_reporter.calculate_accuracy(true_digits, classified_digits)
 
 
 def read_image(puzzle_image):
@@ -500,7 +499,7 @@ def extract_digits(image_homog):
     return image_digit_list
 
 
-def process_digit_images_before_classification(image_digit_list, model):
+def process_digit_images_before_classification(image_digit_list):
     """Remove grid border, reshape/crop digit, remove noise via floodfilling.
     
     0. Crop border
@@ -517,14 +516,14 @@ def process_digit_images_before_classification(image_digit_list, model):
     """
 
     display_images_flag = False
-    predicted_digits = np.zeros((9, 9))
     kernel = np.array([[0.0, 1.0, 0.0], [1.0, 1.0, 1.0], [0.0, 1.0, 0.0]], np.uint8)
-    loaded_model = digit_classifier.load_model(model)
+    processed_images_digit = np.zeros((9, 9), dtype=object)
 
     for i in range(0, 9):
         for j in range(0, 9):
             image_digit = image_digit_list[i][j]
-            predicted_digit = 0
+            # re = np.zeros((28,28))
+            reshaped_image = 0
 
             # if j % 10 == 7 and i == 0:
             if display_images_flag:
@@ -547,14 +546,31 @@ def process_digit_images_before_classification(image_digit_list, model):
                 centered_digit = center_image(flood_filled_image, cropped_image)
                 centered_digit = cv2.erode(centered_digit, kernel)
                 reshaped_image = reshape_digit_image(centered_digit)
+
+            processed_images_digit[i][j] = reshaped_image
+
+    logging.info("done processing all digits")
+    return processed_images_digit
+
+
+def classify_image_digits(processed_image_digits, model):
+    predicted_digits = np.zeros((9, 9))
+    loaded_model = digit_classifier.load_model(model)
+
+    for i in range(0, 9):
+        for j in range(0, 9):
+            predicted_digit = 0
+            digit_to_be_classified = processed_image_digits[i][j]
+
+            if type(digit_to_be_classified) != int:  # non blank, need better method.
                 predicted_digit = digit_classifier.predict_number(
-                    reshaped_image, loaded_model
+                    digit_to_be_classified, loaded_model
                 )
 
             predicted_digits[i][j] = predicted_digit
 
-    logging.info("done classifying all digits")
     solver.pretty_print_puzzle(predicted_digits)
+    logging.info("done classifying all digits")
 
     return predicted_digits
 

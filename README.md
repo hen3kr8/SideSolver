@@ -1,6 +1,11 @@
 # SideSolver
-I am making a sudoku scanner and solver to learn more about OpenCV, Tensorflow and Python. Because coding is fun.  
+I am making a sudoku scanner and solver to learn more about OpenCV, Tensorflow and Python.  
 The idea is that a user scans a photo of a puzzle into the app, and the app spits out the solution.
+
+
+A CNN digit classifier is trained on sudoku digits from sudoku puzzles. (Initially classifier was trained with MNIST but this yielded poor results.)
+
+A puzzle is loaded, the puzzle grid is extracted. The digits are isolated and sent to the classifier.
 
 ### Some progress:
 
