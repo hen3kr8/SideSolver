@@ -20,7 +20,6 @@ Played around with different thresholding methods and found adaptive gaussian to
 
 ![22 March 2020 - *Thresholding*: Played around with different thresholding methods and found adaptive gaussian to indeed work the best. (Makes everything either black or white)](progress/thresholded.png) | ![highres_threshold](progress/highres_threshold.png)
 
-/home/hendrisuithouse/Prive/Side/SideSolver/progress
 
 30 March 2020 - *Floodfilling and blob detection*  
 I found OpenCV's blob function to not quite work the way I wanted (and I could not get it to work immediately #noob) so I wrote my own (it's really slow and cringy and but it works ;))
