@@ -81,7 +81,7 @@ Issues with this approach:
 ## *Solution* :  
 
 Rather simple, train the classifier on the same type of data that it will be used for/tested for.  
-In a non satire language this translates to: USE THE SUDOKU DIGITS TO TRAIN THE CLASSIFIER (**mind blows away**).  
+In a non satire language this translates to: USE THE SUDOKU DIGITS TO TRAIN THE CLASSIFIER.  
 
 This should not be too difficult, [(I have said this far too much in my life and been utterly mistaken)](https://i.gifer.com/KzC.gif).  
 We  take the digits we have been sending to the classifier for classification, and instead put a label on them which we get from the Sudoku puzzle label, and train a classifier.
