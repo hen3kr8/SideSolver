@@ -58,7 +58,7 @@ The tricky part (with this specific dataset) is the preprocessing for recognitio
 Traditionally we would center, erode and dilate to make sure we remove noise and only include the digit (not the border) in the recognition. But the digits are a bit blurry,(see the thresholded image) and the most of the digits with circles in them (8,6,9) get turned into zeros. Applying erosion alone also doesn't solve the problem.  
 (For now I'll experiment with different kernels and gaussian thresholds. Any suggestions?? )  
 
-Also, instead of changing my solution, I changed the [problem](https://wimdecoach.nl/korte-ondersteuning/the-problem-is-not-the-problem).  
+Also, instead of changing my solution, I changed the problem.
 I tried a different, clearer, more modern day photo of a puzzle and it seems to work well. I'll add phots comparing the 2 datasets before and after processing.
 
 June - *MNIST problems*:
@@ -75,7 +75,7 @@ We got a 70 % accuracy for the entire puzzle. 56 of the 70 % was the correct cla
 
 Issues with this approach:   
 
-- **MNIST is handwritten**, these digits are not.  *Surely it doesn't make a big difference*  - It does, clown. I played with the digits make them seem more like MNIST by eroding, dilating, centering, resizing, all with minimal impact --if you find yourself having to change your data to fit the needs of your classifier, you're likely on the wrong path)    
+- **MNIST is handwritten**, these digits are not.  *Surely it doesn't make a big difference*  - It does. I played with the digits make them seem more like MNIST by eroding, dilating, centering, resizing, all with minimal impact --if you find yourself having to change your data to fit the needs of your classifier, you're likely on the wrong path)    
 - **MNIST does not contain any noise** in the image. Different shades of light cause various shades of white on the Sudoku image, causing noise (which the classifier has no idea what to do with).  This was solved with floodfilling the image of the digit, thus not including anything but the digit. (This resulted in a slight improvement)  
 
 ## *Solution* :  
@@ -86,7 +86,13 @@ In a non satire language this translates to: USE THE SUDOKU DIGITS TO TRAIN THE 
 This should not be too difficult, [(I have said this far too much in my life and been utterly mistaken)](https://i.gifer.com/KzC.gif).  
 We  take the digits we have been sending to the classifier for classification, and instead put a label on them which we get from the Sudoku puzzle label, and train a classifier.
 
+## *Update and concluding thoughts*:
+I have forgotten about this project but was updating my CV and thought I'd update this guy.
+Basically the last mentioned solution worked, to an extent. It could classify all digits with 100% accuracy except a 1. It kept classifying the 1 as a 4 (which sortof makes sense as they do look similar).
+I tried adding more layers but that didn't help. I tried Google's Tesseract OCR engine but same problem. Then I gave up.
 
+This was a fun project though. I wanted to make a mobile application to scan puzzles but got discouraged by the not achieving 100% accuracy on digit recognition thing, which is necessary to solve sudoku puzzles. 
+But I did learn about formatters and basic computer vision stuff, so certainly not time wasted.
 
 ### To do:
 - ~~Add pipeline to check style~~ (flake8)
@@ -98,7 +104,7 @@ We  take the digits we have been sending to the classifier for classification, a
 - ~~Apply homography, plot grid to new image (this way we can throw away everything outside of the grid, making it easier to determine position of digits)~~
 - ~~Determine locations of digits~~
 - ~~Identify digits~~
-- Build classifier using sudoku digits
+- ~~Build classifier using sudoku digits~~
 - Map final product to array and solve
 
 - Create interface
@@ -107,10 +113,8 @@ We  take the digits we have been sending to the classifier for classification, a
 
 - Optimize and Neaten 
 
-## Dudes I basically plagiarized/ got inspiration from:
+## Dudes I got inspiration from:
 - http://sudokugrab.blogspot.com/2009/07/how-does-it-all-work.html
 
 - https://aishack.in/tutorials/sudoku-grabber-opencv-detection
 
-
-### Constructive critism welcome. #BeLekker
