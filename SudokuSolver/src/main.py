@@ -26,7 +26,7 @@ if __name__ == "__main__":
         "-m",
         "--model",
         type=str,
-        default="models/finalized_model.sav",
+        default="models/finalized_model.keras",
         help="path to model to be used",
     )
     args = vars(ap.parse_args())

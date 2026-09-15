@@ -46,7 +46,6 @@ def train_classifier():
 
     plt.imshow(x_test[image_index].reshape(28, 28), cmap="Greys")
     plt.show()
-    return None
 
     # Creating a Sequential Model and adding the layers
     model = Sequential()
@@ -68,18 +67,34 @@ def train_classifier():
 
 
 def serialize_model(model):
-    filename = "models/finalized_model.sav"
-    pickle.dump(model, open(filename, "wb"))
+    filename = "models/finalized_model.keras"
+    model.save(filename)
     logging.info("model serialized")
 
 
-def load_model(filename="models/finalized_model.sav"):
-    loaded_model = pickle.load(open(filename, "rb"))
-    logging.debug("model loaded")
+def load_model(filename="models/finalized_model.keras"):
+    if filename.endswith(".keras"):
+        loaded_model = tf.keras.models.load_model(filename)
+        logging.debug("model loaded")
+        return loaded_model
+
+    try:
+        with open(filename, "rb") as model_file:
+            loaded_model = pickle.load(model_file)
+    except (ModuleNotFoundError, AttributeError) as error:
+        raise RuntimeError(
+            "The legacy pickled model is incompatible with the current "
+            "TensorFlow/Keras version. Retrain the classifier to create "
+            "models/finalized_model.keras."
+        ) from error
+
+    logging.debug("legacy model loaded")
     return loaded_model
 
 
-def predict_number(image, loaded_model=load_model()):
+def predict_number(image, loaded_model=None):
+    if loaded_model is None:
+        loaded_model = load_model()
 
     # image = puzzle_extractor.apply_threshold(src_image=image, bin=True)
     # image = np.invert(image)

@@ -2,6 +2,9 @@ import accuracy_reporter
 import cv2
 import digit_classifier
 import logging
+import matplotlib
+
+matplotlib.use("QtAgg")
 import matplotlib.pyplot as plt
 import numpy as np
 import operator
@@ -9,7 +12,7 @@ import solver
 import sys
 
 
-display_images_flag = False
+display_images_flag = True
 debug = False
 logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
@@ -19,9 +22,11 @@ if debug:
 
 
 def main(
-    puzzle_image="../sudoku_dataset-master/images/image1081.jpg",
-    puzzle_solution="../sudoku_dataset-master/images/image1081.dat",
-    model="models/finalized_model.sav",
+    puzzle_image="../test/image1081.jpg",
+    puzzle_solution="../test/image1081.dat",
+    # puzzle_image="../sudoku_dataset-master/images/image1081.jpg",
+    # puzzle_solution="../sudoku_dataset-master/images/image1081.dat",
+    model="models/finalized_model.keras",
 ):
 
     raw_image = read_image(puzzle_image)
@@ -29,8 +34,8 @@ def main(
     grid = find_largest_object(thres_image)
     corners = corner_detection(grid)
 
-    if display_images_flag:
-        plot_corners_original(raw_image, corners)
+    # if display_images_flag:
+    #     plot_corners_original(raw_image, corners)
 
     # homography
     image_homog = apply_homography(raw_image, corners_src=corners)
@@ -44,11 +49,11 @@ def main(
     )
 
     # classify digits
-    classified_digits = classify_image_digits(processed_image_digits, model)
+    # classified_digits = classify_image_digits(processed_image_digits, model)
 
     # accuracy of puzzle
-    true_digits = accuracy_reporter.read_true_puzzle_digits(puzzle_solution)
-    accuracy_reporter.calculate_accuracy(true_digits, classified_digits)
+    # true_digits = accuracy_reporter.read_true_puzzle_digits(puzzle_solution)
+    # accuracy_reporter.calculate_accuracy(true_digits, classified_digits)
 
 
 def read_image(puzzle_image):
