@@ -116,6 +116,8 @@ venv.bak/
 
 # Other files
 progress/not_git/
+SudokuSolver/data/
+sudoku_dataset-master.zip
 
 # Spyder project settings
 .spyderproject

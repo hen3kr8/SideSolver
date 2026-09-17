@@ -5,6 +5,10 @@ from keras.layers import Flatten
 from keras.layers import MaxPooling2D
 from keras.models import Sequential
 import logging
+import glob
+import os
+import cv2
+import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 import tensorflow as tf
@@ -18,6 +22,47 @@ def main():
     logging.basicConfig()
     logging.getLogger().setLevel(logging.INFO)
     train_classifier()
+
+
+def load_processed_digits(data_dir="data/processed_digits"):
+    X, y, src = [], [], []
+    for path in sorted(glob.glob(os.path.join(data_dir, "*", "*.png"))):
+        img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+        if img is None or img.shape != (32, 32):
+            continue
+        X.append(img)
+        y.append(int(os.path.basename(os.path.dirname(path))) - 1)
+        # "image10002_7.png" -> source photo "image1000"
+        src.append(os.path.basename(path).split("_")[0][:-1])
+    X = np.array(X, dtype="float32").reshape(-1, 32, 32, 1) / 255.0
+    return X, np.array(y), np.array(src)
+
+
+def train_on_processed_digits(model_path="models/digit_model.keras"):
+    X, y, src = load_processed_digits()
+
+    # hold out whole photos, so cells from one image never span the split
+    photos = np.unique(src)
+    rng = np.random.default_rng(0)
+    test_photos = set(rng.choice(photos, len(photos) // 5, replace=False).tolist())
+    is_test = np.array([s in test_photos for s in src])
+
+    model = tf.keras.Sequential([
+        tf.keras.layers.Conv2D(32, 3, activation="relu", input_shape=(32, 32, 1)),
+        tf.keras.layers.MaxPooling2D(),
+        tf.keras.layers.Conv2D(64, 3, activation="relu"),
+        tf.keras.layers.MaxPooling2D(),
+        tf.keras.layers.Flatten(),
+        tf.keras.layers.Dense(128, activation="relu"),
+        tf.keras.layers.Dropout(0.3),
+        tf.keras.layers.Dense(9, activation="softmax"),
+    ])
+    model.compile(optimizer="adam", loss="sparse_categorical_crossentropy",
+                  metrics=["accuracy"])
+    model.fit(X[~is_test], y[~is_test], epochs=15,
+              validation_data=(X[is_test], y[is_test]))
+    model.save(model_path)
+    return model
 
 
 def train_classifier():
@@ -44,12 +89,12 @@ def train_classifier():
 
     image_index = 2
 
-    plt.imshow(x_test[image_index].reshape(28, 28), cmap="Greys")
+    plt.imshow(x_test[image_index].reshape(32, 32), cmap="Greys")
     plt.show()
 
     # Creating a Sequential Model and adding the layers
     model = Sequential()
-    model.add(Conv2D(28, kernel_size=(3, 3), input_shape=input_shape))
+    model.add(Conv2D(28, kernel_size=(3, 3), input_shape=input_shape)) # should this be 32?
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Flatten())  # Flattening the 2D arrays for fully connected layers
     model.add(Dense(128, activation=tf.nn.relu))

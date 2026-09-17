@@ -10,10 +10,12 @@ import numpy as np
 import operator
 import solver
 import sys
+import os 
 
 
-display_images_flag = True
+display_images_flag = False
 debug = False
+create_digit_dataset = False
 logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
 
@@ -29,31 +31,135 @@ def main(
     model="models/finalized_model.keras",
 ):
 
-    raw_image = read_image(puzzle_image)
-    thres_image = apply_threshold(raw_image)
-    grid = find_largest_object(thres_image)
-    corners = corner_detection(grid)
+    if create_digit_dataset:
+        logging.info("creating digit dataset")
+        create_digit_dataset()
+        logging.info("done creating digit dataset")
 
-    # if display_images_flag:
-    #     plot_corners_original(raw_image, corners)
+    else:
 
-    # homography
-    image_homog = apply_homography(raw_image, corners_src=corners)
+        logging.info("skipping digit dataset creation")
+        raw_image = read_image(puzzle_image)
+        thres_image = apply_threshold(raw_image)
+        grid = find_largest_object(thres_image)
+        corners = corner_detection(grid)
 
-    # extract digits
-    image_digit_list = extract_digits(image_homog)
+        # if display_images_flag:
+        #     plot_corners_original(raw_image, corners)
 
-    # process digits
-    processed_image_digits = process_digit_images_before_classification(
-        image_digit_list
-    )
+        # homography
+        image_homog = apply_homography(raw_image, corners_src=corners)
 
-    # classify digits
-    # classified_digits = classify_image_digits(processed_image_digits, model)
+        # extract digits
+        image_digit_list = extract_digits(image_homog)
 
-    # accuracy of puzzle
-    # true_digits = accuracy_reporter.read_true_puzzle_digits(puzzle_solution)
-    # accuracy_reporter.calculate_accuracy(true_digits, classified_digits)
+        # process digits
+        processed_image_digits = process_digit_images_before_classification(
+            image_digit_list
+        )
+
+        # classify digits
+        # classified_digits = classify_image_digits(processed_image_digits, model)
+
+        # accuracy of puzzle
+        # true_digits = accuracy_reporter.read_true_puzzle_digits(puzzle_solution)
+        # accuracy_reporter.calculate_accuracy(true_digits, classified_digits)
+
+
+def create_digit_dataset():
+
+    training_data_images = read_training_data_images()
+    text_solutions = read_true_puzzle_digits()
+    logging.info("done reading training data images and solutions")
+    counter = 0
+    for image_name, raw_image in training_data_images.items():
+
+        thres_image = apply_threshold(raw_image)
+        grid = find_largest_object(thres_image)
+        corners = corner_detection(grid)
+
+        # if display_images_flag:
+        #     plot_corners_original(raw_image, corners)
+
+        # homography
+        image_homog = apply_homography(raw_image, corners_src=corners)
+
+        # extract digits
+        image_digit_list = extract_digits(image_homog)
+
+        # process digits
+        processed_image_digits = process_digit_images_before_classification(
+            image_digit_list
+            )
+
+        # actual digit list (so we know if the digit is 0, 1, 2, 3, 4, 5, 6, 7, 8, or 9)
+        save_digits_to_folder(processed_image_digits, text_solutions[image_name], image_name)
+
+    logging.info("done saving digits of all puzzles to folder")
+
+
+def save_digits_to_folder(processed_image_digits, true_digits, image_name):
+    """Save the processed digit images to folders, so that they can be used to train the classifier.
+
+    Arguments:
+        processed_image_digits {list of list of np.array} -- 9 x 9 list of lists, each
+                                                       containing an image of a digit
+        true_digits {list of list of int} -- 9 x 9 list of lists, each
+                                                       containing the true digit
+        image_name {str} -- name of the image, used to create unique folder names.
+    """
+
+    display_images_flag_local = False
+    # create folders 1-9
+    directory = "../data/processed_digits"
+    for i in range(1,10):
+        digit_directory = directory + "/" + str(i)
+        if not os.path.isdir(digit_directory):
+            os.makedirs(digit_directory, exist_ok=True)
+    logging.info("done creating digit folders")
+    logging.info("saving digits to folder")
+
+    for i in range(0,9):
+        for j in range(0,9):
+            true_digit = true_digits[i][j]
+            if true_digit != "0":
+                # show image
+                if display_images_flag_local and isinstance(processed_image_digits[i][j], np.ndarray):
+                    plt.imshow(processed_image_digits[i][j], cmap="gray")
+                    plt.title("digit " + str(true_digit))
+                    plt.show()
+
+                digit_path = directory + "/" + str(true_digit) + "/" + image_name + str(i) + '_' + str(j) + ".png"
+                cv2.imwrite(digit_path, processed_image_digits[i][j])
+    logging.info("done saving digits to folder for image " + image_name)
+    
+
+def read_training_data_images(path="../data/v2_train/")-> dict:
+    """Read training data images from path. This is used to create the digits which later will train the classifier. 
+
+    Arguments:
+        path {str} -- path to training data images
+    """
+    training_data_images = {}
+    for file in os.listdir(path):
+        if file.endswith(".jpg"):
+            image = cv2.imread(os.path.join(path, file), cv2.IMREAD_GRAYSCALE)
+            image_name = file.split(".")[0]
+            training_data_images[image_name] = image
+
+    return training_data_images
+
+def read_true_puzzle_digits(path="../data/v2_train/") -> dict:
+    "Read the text based sudoku, so we know can train our classifier, and split the datasets into digit folders."
+
+    text_solutions = {}
+    for file in os.listdir(path):
+        if file.endswith(".dat"):
+            text_solution = [i.strip().split() for i in open(os.path.join(path, file)).readlines()[2:]]
+            file_name = file.split(".")[0]
+            text_solutions[file_name] = text_solution
+    # need to check - might have to cvert to numpy array.
+    return text_solutions
 
 
 def read_image(puzzle_image):
@@ -142,14 +248,14 @@ def flood_filling(image):
             if image[i, j] == 255 and new_image[i, j] == 0:
                 counter += 1
                 new_image[i, j] = counter
-                search(i, j, s)
+                search(i, j, s, h, w)
 
                 while len(s) > 0:
                     x, y = s.pop()
                     try:
                         if image[x, y] == 255 and new_image[x, y] == 0:
                             new_image[x, y] = counter
-                            search(x, y, s)
+                            search(x, y, s, h, w)
 
                     except IndexError:
                         pass
@@ -182,22 +288,23 @@ def find_biggest_blob(new_image, largest_island=2):
     try:
         biggest_island = sorted(z, key=lambda pair: pair[1])[-largest_island][0]
         # 2nd last element, 1st value
+        # convert to new_image to only contain biggest island number.
+        for i in range(h):
+            for j in range(w):
+                new_image[i, j] = 255 if new_image[i, j] == biggest_island else 0
+        
     except IndexError as e:
         logging.error("%s - Could not find digit.", e)
 
-    # convert to new_image to only contain biggest island number.
-    for i in range(h):
-        for j in range(w):
-            new_image[i, j] = 255 if new_image[i, j] == biggest_island else 0
-
+    
     return new_image
 
 
-def search(i, j, s):
-    s.append((i - 1, j))
-    s.append((i + 1, j))
-    s.append((i, j + 1))
-    s.append((i, j - 1))
+def search(i, j, s, h, w):
+    if i > 0:     s.append((i - 1, j))
+    if i < h - 1: s.append((i + 1, j))
+    if j < w - 1: s.append((i, j + 1))
+    if j > 0:     s.append((i, j - 1))
 
 
 def corner_detection(image):
@@ -378,7 +485,7 @@ def remove_noise(image_digit):
     image_digit = np.invert(image_digit)
     kernel = np.ones((3, 3), np.uint8)
     noise_free_image = cv2.morphologyEx(image_digit, cv2.MORPH_OPEN, kernel)
-    noise_free_image = cv2.erode(image_digit, kernel, iterations=2)
+    # noise_free_image = cv2.erode(image_digit, kernel, iterations=2)
 
     if display_images_flag:
         plt.imshow(noise_free_image, cmap="gray")
@@ -418,7 +525,7 @@ def is_blank_digit(image_digit):
         np.prod(new_image.shape),
     )
 
-    if biggest_island_size > np.prod(new_image.shape) * 1 / 12:
+    if biggest_island_size > np.prod(new_image.shape) * 1 / 40:
         logging.debug("not blank")
         return False
 
@@ -427,10 +534,11 @@ def is_blank_digit(image_digit):
         return True
 
 
-def reshape_digit_image(image, new_image_shape=(28, 28)):
-    """Reshape image to 28 x 28 image using homography.
+def reshape_digit_image(image, new_image_shape=(32, 32), margin=4):
+    """Reshape image to 32 x 32 image using homography. Strike that.
+    Homography  preserves straght lines, not the scale/ width height ratio. So we will scale using open cv resze
 
-    This classifier was trained with MNIST which is 28 x 28.
+    This classifier was trained with MNIST which is 32 x 32.
 
     Arguments:
         image {np.array} -- image of digit to be reshaped
@@ -438,35 +546,34 @@ def reshape_digit_image(image, new_image_shape=(28, 28)):
     Keyword Arguments:
         new_image_shape {tuple} -- In future, we might train classifier with
                                    different dataset containing images of
-                                   different shape (default: {(28, 28)})
+                                   different shape (default: {(32, 32)})
+        margin {int} -- Margin to add around the digit (default: {4})
 
     Returns:
         [np.array] -- reshaped image
     """
 
+    h, w = image.shape
+    side = new_image_shape[0] - 2 * margin
+    scale = side / max(h, w)                      # ONE factor, both axes
+    nh, nw = max(1, round(h * scale)), max(1, round(w * scale))
+    resized = cv2.resize(image, (nw, nh), interpolation=cv2.INTER_AREA)
+
     reshaped_image = np.zeros(new_image_shape)
-    corners_dst_top_l = [0, 0]
-    corners_dst_top_r = [reshaped_image.shape[1], 0]
-    corners_dst_bot_r = [reshaped_image.shape[1], reshaped_image.shape[0]]
-    corners_dst_bot_l = [0, reshaped_image.shape[0]]
+    top, left = (new_image_shape[0] - nh) // 2, (new_image_shape[1] - nw) // 2
+    reshaped_image[top:top + nh, left:left + nw] = resized
 
-    corners_dst = [
-        corners_dst_top_l,
-        corners_dst_top_r,
-        corners_dst_bot_r,
-        corners_dst_bot_l,
-    ]
 
-    reshaped_image = apply_homography(
-        image, corners_src=None, corners_dst=corners_dst, new_image=reshaped_image,
-    )
+    # show image
     display_images_flag = False
     if display_images_flag:
-        plt.imshow(reshaped_image)
+        plt.imshow(reshaped_image, cmap="gray")
         plt.title("reshaped_image")
         plt.show()
 
     return reshaped_image
+
+
 
 
 def extract_digits(image_homog):
@@ -482,8 +589,8 @@ def extract_digits(image_homog):
         [list of lists of np.array] -- a matrix of images of digits
     """
 
-    plt.imshow(image_homog, cmap="gray")
-    plt.show()
+    # plt.imshow(image_homog, cmap="gray")
+    # plt.show()
 
     h, w = image_homog.shape
     image_digit_list = []
@@ -527,7 +634,7 @@ def process_digit_images_before_classification(image_digit_list):
     for i in range(0, 9):
         for j in range(0, 9):
             image_digit = image_digit_list[i][j]
-            # re = np.zeros((28,28))
+            # re = np.zeros((32,32))
             reshaped_image = 0
 
             # if j % 10 == 7 and i == 0:
@@ -549,7 +656,7 @@ def process_digit_images_before_classification(image_digit_list):
 
             if not is_blank_digit(flood_filled_image):
                 centered_digit = center_image(flood_filled_image, cropped_image)
-                centered_digit = cv2.erode(centered_digit, kernel)
+                # centered_digit = cv2.erode(centered_digit, kernel)
                 reshaped_image = reshape_digit_image(centered_digit)
 
             processed_images_digit[i][j] = reshaped_image
@@ -597,10 +704,12 @@ def center_image(flood_filled_image, cropped_image):
     new_image = np.zeros(shape=(flood_filled_image.shape))
 
     # map digit from original image to a new image (thus ignoring noise)
-    for i in range(0, h):
-        for j in range(0, w):
-            if flood_filled_image[i, j] == 255:
-                new_image[i, j] = cropped_image[i, j]
+    # for i in range(0, h):
+    #     for j in range(0, w):
+    #         if flood_filled_image[i, j] == 255:
+    #             new_image[i, j] = 255 #cropped_image[i, j]
+    new_image = flood_filled_image.copy()
+
 
     if display_images_flag:
         plt.imshow(new_image)
@@ -621,13 +730,13 @@ def center_image(flood_filled_image, cropped_image):
         plt.show()
 
     # add padding
-    row_padding = np.zeros(shape=(5, centered_image.shape[1]))
-    centered_image = np.concatenate((row_padding, centered_image), axis=0)
-    centered_image = np.concatenate((centered_image, row_padding), axis=0)
+    # row_padding = np.zeros(shape=(5, centered_image.shape[1]))
+    # centered_image = np.concatenate((row_padding, centered_image), axis=0)
+    # centered_image = np.concatenate((centered_image, row_padding), axis=0)
 
-    col_padding = np.zeros(shape=(centered_image.shape[0], 5))
-    centered_image = np.concatenate((col_padding, centered_image), axis=1)
-    centered_image = np.concatenate((centered_image, col_padding), axis=1)
+    # col_padding = np.zeros(shape=(centered_image.shape[0], 5))
+    # centered_image = np.concatenate((col_padding, centered_image), axis=1)
+    # centered_image = np.concatenate((centered_image, col_padding), axis=1)
 
     logging.debug("padding added")
     return centered_image
