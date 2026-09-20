@@ -15,7 +15,14 @@ import os
 
 display_images_flag = False
 debug = False
-create_digit_dataset = False
+create_training_set = False
+create_test_set = False
+training_set_path = "../data/v2_train_raw/"
+test_set_path = "../data/v2_test_raw"
+path_to_processed_training_digits_directory = "../data/processed_digits/training"
+path_to_processed_test_digits_directory = "../data/processed_digits/test"
+
+
 logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
 
@@ -31,10 +38,18 @@ def main(
     model="models/finalized_model.keras",
 ):
 
-    if create_digit_dataset:
-        logging.info("creating digit dataset")
-        create_digit_dataset()
-        logging.info("done creating digit dataset")
+    
+    if create_training_set:
+        create_digit_folders(path_to_digit_folder=path_to_processed_training_digits_directory)
+        logging.info("creating training digit dataset")
+        create_digit_dataset(training_set_path, path_to_digit_folder=path_to_processed_training_digits_directory)
+        logging.info("done creating training digit dataset")
+
+    if create_test_set:
+        create_digit_folders(path_to_digit_folder=path_to_processed_test_digits_directory)
+        logging.info("creating test digit dataset")
+        create_digit_dataset(test_set_path, path_to_digit_folder=path_to_processed_test_digits_directory)
+        logging.info("done creating test digit dataset")
 
     else:
 
@@ -66,24 +81,31 @@ def main(
         # accuracy_reporter.calculate_accuracy(true_digits, classified_digits)
 
 
-def create_digit_dataset():
+def create_digit_dataset(dataset_path, path_to_digit_folder):
 
-    training_data_images = read_training_data_images()
-    text_solutions = read_true_puzzle_digits()
-    logging.info("done reading training data images and solutions")
-    counter = 0
-    for image_name, raw_image in training_data_images.items():
+    data_images = read_data_images(dataset_path)
+    text_solutions = read_true_puzzle_digits(dataset_path)
+    logging.info("done reading data images and solutions from " + dataset_path)
+    counter = 1
+    for image_name, raw_image in data_images.items():
 
         thres_image = apply_threshold(raw_image)
         grid = find_largest_object(thres_image)
         corners = corner_detection(grid)
 
-        # if display_images_flag:
-        #     plot_corners_original(raw_image, corners)
+        if corners is None:
+            logging.warning(
+                "corners are None for image %s, skipping this image", image_name
+            )
+            continue
+
 
         # homography
         image_homog = apply_homography(raw_image, corners_src=corners)
-
+        # if display_images_flag and image_name in ("image73", "image35", "image114", "image1081", "image117"):
+        #     plt.imshow(image_homog, cmap="gray")
+        #     plt.title("image_homog")
+        #     plt.show()
         # extract digits
         image_digit_list = extract_digits(image_homog)
 
@@ -93,12 +115,24 @@ def create_digit_dataset():
             )
 
         # actual digit list (so we know if the digit is 0, 1, 2, 3, 4, 5, 6, 7, 8, or 9)
-        save_digits_to_folder(processed_image_digits, text_solutions[image_name], image_name)
-
+        save_digits_to_folder(processed_image_digits, text_solutions[image_name], image_name, path_to_digit_folder)
+        logging.info("done saving digits to folder for " + str(counter) + " of " + str(len(data_images)) + " images")
+        counter += 1
     logging.info("done saving digits of all puzzles to folder")
 
 
-def save_digits_to_folder(processed_image_digits, true_digits, image_name):
+def create_digit_folders(path_to_digit_folder="../data/processed_digits/training"):
+
+    # create folders 1-9
+    directory = path_to_digit_folder
+    for i in range(1,10):
+        digit_directory = directory + "/" + str(i)
+        if not os.path.isdir(digit_directory):
+            os.makedirs(digit_directory, exist_ok=True)
+    logging.info("done creating digit folders")
+
+
+def save_digits_to_folder(processed_image_digits, true_digits, image_name, path_to_digit_folder):
     """Save the processed digit images to folders, so that they can be used to train the classifier.
 
     Arguments:
@@ -107,50 +141,57 @@ def save_digits_to_folder(processed_image_digits, true_digits, image_name):
         true_digits {list of list of int} -- 9 x 9 list of lists, each
                                                        containing the true digit
         image_name {str} -- name of the image, used to create unique folder names.
+        path_to_digit_folder {str} -- path to the folder where the digits will be saved.
     """
 
     display_images_flag_local = False
-    # create folders 1-9
-    directory = "../data/processed_digits"
-    for i in range(1,10):
-        digit_directory = directory + "/" + str(i)
-        if not os.path.isdir(digit_directory):
-            os.makedirs(digit_directory, exist_ok=True)
-    logging.info("done creating digit folders")
+    
     logging.info("saving digits to folder")
-
     for i in range(0,9):
         for j in range(0,9):
             true_digit = true_digits[i][j]
-            if true_digit != "0":
-                # show image
-                if display_images_flag_local and isinstance(processed_image_digits[i][j], np.ndarray):
+            if true_digit != "0" and isinstance(processed_image_digits[i][j], np.ndarray):
+                # digit is not blank according to label, and we did not identify it as blank, so we save it to the folder.
+                if display_images_flag_local:
                     plt.imshow(processed_image_digits[i][j], cmap="gray")
                     plt.title("digit " + str(true_digit))
                     plt.show()
 
-                digit_path = directory + "/" + str(true_digit) + "/" + image_name + str(i) + '_' + str(j) + ".png"
+                digit_path = path_to_digit_folder + "/" + str(true_digit) + "/" + image_name + str(i) + '_' + str(j) + ".png"
                 cv2.imwrite(digit_path, processed_image_digits[i][j])
     logging.info("done saving digits to folder for image " + image_name)
     
 
-def read_training_data_images(path="../data/v2_train/")-> dict:
-    """Read training data images from path. This is used to create the digits which later will train the classifier. 
+def read_data_images(path)-> dict:
+    """Read training and test data images from path (2 different folders). 
+    This is used to create the digits which later will train and testthe classifier. 
 
     Arguments:
-        path {str} -- path to training data images
+        path {str} -- path to training or test data images
+
+    Returns:
+        [dict] -- dictionary of images, where key is the image name and value is the image itself.
     """
-    training_data_images = {}
+    data_images = {}
     for file in os.listdir(path):
         if file.endswith(".jpg"):
-            image = cv2.imread(os.path.join(path, file), cv2.IMREAD_GRAYSCALE)
+            # image = cv2.imread(os.path.join(path, file), cv2.IMREAD_GRAYSCALE)
+            image = cv2.imread(os.path.join(path, file), cv2.IMREAD_GRAYSCALE | cv2.IMREAD_IGNORE_ORIENTATION)
             image_name = file.split(".")[0]
-            training_data_images[image_name] = image
+            data_images[image_name] = image
+    return data_images
 
-    return training_data_images
 
-def read_true_puzzle_digits(path="../data/v2_train/") -> dict:
-    "Read the text based sudoku, so we know can train our classifier, and split the datasets into digit folders."
+def read_true_puzzle_digits(path) -> dict:
+    """Read the text based sudoku, so we now can train our classifier, and split the datasets into digit folders.
+
+    Arguments:
+            path {str} -- path to training or test data text solutions
+    
+        Returns:
+            [dict] -- dictionary of text solutions, where key is the image name and value is the text solution.
+    """
+
 
     text_solutions = {}
     for file in os.listdir(path):
@@ -159,6 +200,7 @@ def read_true_puzzle_digits(path="../data/v2_train/") -> dict:
             file_name = file.split(".")[0]
             text_solutions[file_name] = text_solution
     # need to check - might have to cvert to numpy array.
+    print("text_solutions: ", text_solutions)
     return text_solutions
 
 
@@ -281,23 +323,30 @@ def find_biggest_blob(new_image, largest_island=2):
     Returns:
         [np.array] -- the image only containing the biggest blob.
     """
-
-    h, w = new_image.shape
     unique, counts = np.unique(new_image, return_counts=True)
-    z = zip(unique, counts)
-    try:
-        biggest_island = sorted(z, key=lambda pair: pair[1])[-largest_island][0]
-        # 2nd last element, 1st value
-        # convert to new_image to only contain biggest island number.
-        for i in range(h):
-            for j in range(w):
-                new_image[i, j] = 255 if new_image[i, j] == biggest_island else 0
+    if len(unique) < largest_island:
+        logging.debug("no blob found - cell is blank")
+        return np.zeros_like(new_image)
+
+    biggest_island = unique[np.argsort(counts, kind="stable")[-largest_island]]
+    return np.where(new_image == biggest_island, 255, 0).astype(new_image.dtype)
+
+    # h, w = new_image.shape
+    # unique, counts = np.unique(new_image, return_counts=True)
+    # z = zip(unique, counts)
+    # try:
+    #     biggest_island = sorted(z, key=lambda pair: pair[1])[-largest_island][0]
+    #     # 2nd last element, 1st value
+    #     # convert to new_image to only contain biggest island number.
+    #     for i in range(h):
+    #         for j in range(w):
+    #             new_image[i, j] = 255 if new_image[i, j] == biggest_island else 0
         
-    except IndexError as e:
-        logging.error("%s - Could not find digit.", e)
+    # except IndexError as e:
+    #     logging.error("%s - Could not find digit.", e)
 
     
-    return new_image
+    # return new_image
 
 
 def search(i, j, s, h, w):
@@ -357,6 +406,18 @@ def corner_detection(image):
         plt.show()
 
     corners = [top_left, top_right, bottom_left, bottom_right]
+
+    quad_area = cv2.contourArea(np.array(corners, dtype=np.int32))
+    blob_area = cv2.contourArea(largest_contour)
+    ratio = quad_area / blob_area
+
+    if ratio > 1.4: # some corners are not detected correctly, so we skip this image. The ratio of the area of the quad to the area of the blob should be less than 1.4.
+        logging.warning(
+            "The ratio of the area of the quad to the area of the blob is %s, which is greater than 1.4. This might indicate that the corners are not detected correctly.",
+            ratio,
+        )
+        return None
+
     return corners
 
 
@@ -617,7 +678,7 @@ def process_digit_images_before_classification(image_digit_list):
     0. Crop border
     1. Apply floodfilling to find digit - this removes all noise
     2. Center image using result from 1.
-    3. Reshape using homography
+    3. Reshape using scale
 
     Arguments:
         image_digit_list {list of list of np.array} -- 9 x 9 list of lists, each

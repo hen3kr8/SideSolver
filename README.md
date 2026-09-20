@@ -94,6 +94,21 @@ I tried adding more layers but that didn't help. I tried Google's Tesseract OCR 
 This was a fun project though. I wanted to make a mobile application to scan puzzles but got discouraged by the not achieving 100% accuracy on digit recognition thing, which is necessary to solve sudoku puzzles. 
 But I did learn about formatters and basic computer vision stuff, so certainly not time wasted.
 
+
+## *Update 2 - My momma didnt raise a quitter*:
+Fast forward 6 years, a degree and 2 jobs later.
+A colleague convinced me that I could still try solve the puzzle with faulty 1's and 4's and change them if the puzzle is unsolvable or invalid.
+
+My good friend Claude took a critical look at my code and pinpointed where it was going wrong:
+- Some digits were rotated by 90/180 degrees (due to upsidedown photos) - these digits ended in the wrong folder as the code assumed no rotation. **Easy fix: opencv rotation_axis flag**.
+- By eroding the digit image, I was thinning out a big part of the digit, which means it loses it distinctiveness (1's are thick, 4's a bit less). **Easy fix: Don't erode**.
+- After centering the digit, i was reshaping it to fill the entire image using homography. But homography preserves straght lines, not the scale/ width height ratio. This way all digits get streched over the entire image and loses distinctiveness **Mid fix: replace homography of digits with scale to preserve the width:height ratio.**
+- Some images were low quality so the corners could not be detected correctly. This leads to very distorted images after the initial homography. Splitting the image into 9x9 cells essentially gives garbage. **Big fix: TODO The Floodfilling approach to find the grid needs to be replaced with Hough transforms.** (For now i check whether the shape we found is actually grid-shaped, by asking how much of its own bounding box it fills. If the ratio > 1.4 then i discard it. This is a temp fix.)
+
+
+
+
+
 ### To do:
 - ~~Add pipeline to check style~~ (flake8)
 - ~~add formatter~~ [black](https://black.readthedocs.io/en/stable/)
