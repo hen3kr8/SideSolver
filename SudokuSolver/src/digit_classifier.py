@@ -234,7 +234,8 @@ def predict_number(image, loaded_model=None):
     logging.debug("prediction %s", pred)
     logging.debug("prediction %d", pred.argmax())
 
-    return pred.argmax()
+    # training labels are class index (0-8) = digit (1-9) - 1, so shift back.
+    return pred.argmax() + 1
 
 
 if __name__ == "__main__":

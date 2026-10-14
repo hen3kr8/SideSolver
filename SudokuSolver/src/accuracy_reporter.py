@@ -1,9 +1,13 @@
 # Compare puzzle recognized by classifier to label (puzzle saved in dataset)
 import logging
 import solver
+import numpy as np
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
+
+
+# function to calculate accuracy of entire puzzle
 
 
 def read_true_puzzle_digits(puzzle_solution):
@@ -14,6 +18,7 @@ def read_true_puzzle_digits(puzzle_solution):
     logging.info("REAL PUZZLE")
     solver.pretty_print_puzzle(true_digits)
     return true_digits
+
 
 
 def calculate_accuracy(true_digits, pred_digits, show_per_digit_stats=True):

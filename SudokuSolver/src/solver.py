@@ -76,6 +76,46 @@ def valid_number(puzzle, x, y, num):
     return True
 
 
+def solve_puzzle(initial_puzzle):
+    """Solve a given 9x9 puzzle and return the solved grid.
+
+    Unlike fill_in()/solve(), this does not rely on global state and stops
+    as soon as a solution is found (instead of backtracking through all of
+    them), so the returned grid is usable by callers.
+
+    Arguments:
+        initial_puzzle {array-like} -- 9 x 9 grid, 0 (or "0") for blank cells
+
+    Returns:
+        [np.array] -- solved 9 x 9 grid, or None if no solution exists.
+    """
+
+    puzzle = np.array(initial_puzzle, dtype=int)
+
+    if _fill_in_puzzle(puzzle):
+        return puzzle
+
+    return None
+
+
+def _fill_in_puzzle(puzzle):
+    n = puzzle.shape[0]
+
+    for i in range(0, n):
+        for j in range(0, n):
+            if puzzle[i][j] == 0:
+                for num in range(1, 10):
+                    if valid_number(puzzle, i, j, num):
+                        puzzle[i][j] = num
+                        if _fill_in_puzzle(puzzle):
+                            return True
+                        puzzle[i][j] = 0
+
+                return False
+
+    return True
+
+
 def unit_tests(puzzle):
     v = valid_number(puzzle, 0, 0, 4)
     assert v is True

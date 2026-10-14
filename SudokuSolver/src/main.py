@@ -1,5 +1,10 @@
 import argparse
+import os
 import puzzle_extractor
+import digit_classifier
+
+_here = os.path.dirname(os.path.abspath(__file__))
+
 
 
 def run(args):
@@ -12,21 +17,21 @@ if __name__ == "__main__":
         "-i",
         "--puzzle_image",
         required=False,
-        default="../test/image1081.jpg",
+        default=os.path.join(_here, "..", "test", "image1081.jpg"),
         help="path to input puzzle_image",
     )
     ap.add_argument(
         "-s",
         "--puzzle_solution",
         required=False,
-        default="../test/image1081.dat",
+        default=os.path.join(_here, "..", "test", "image1081.dat"),
         help="path to input puzzle_solution",
     )
     ap.add_argument(
         "-m",
         "--model",
         type=str,
-        default="models/finalized_model.keras",
+        default=os.path.join(_here, "models", "finalized_model.keras"),
         help="path to model to be used",
     )
     args = vars(ap.parse_args())

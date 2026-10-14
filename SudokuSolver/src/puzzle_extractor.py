@@ -17,7 +17,7 @@ display_images_flag = False
 debug = False
 create_training_set = False
 create_test_set = False
-training_set_path = "../data/v2_train_raw/"
+training_set_path = "../data/v2_train_raw/image108"
 test_set_path = "../data/v2_test_raw"
 path_to_processed_training_digits_directory = "../data/processed_digits/training"
 path_to_processed_test_digits_directory = "../data/processed_digits/test"
@@ -31,8 +31,8 @@ if debug:
 
 
 def main(
-    puzzle_image="../test/image1081.jpg",
-    puzzle_solution="../test/image1081.dat",
+    puzzle_image="../data/v2_train_raw/image1081.jpg",
+    puzzle_solution="../data/v2_train_raw/image1081.dat",
     # puzzle_image="../sudoku_dataset-master/images/image1081.jpg",
     # puzzle_solution="../sudoku_dataset-master/images/image1081.dat",
     model="models/finalized_model.keras",
@@ -54,31 +54,126 @@ def main(
     else:
 
         logging.info("skipping digit dataset creation")
-        raw_image = read_image(puzzle_image)
-        thres_image = apply_threshold(raw_image)
-        grid = find_largest_object(thres_image)
-        corners = corner_detection(grid)
+        extract_digits_from_image(puzzle_image, puzzle_solution, model)
+        solve_puzzle_from_image(puzzle_image, model)
+        
 
-        # if display_images_flag:
-        #     plot_corners_original(raw_image, corners)
+def extract_digits_from_image(puzzle_image, puzzle_solution, model):
+    raw_image = read_image(puzzle_image)
+    thres_image = apply_threshold(raw_image)
+    grid = find_largest_object(thres_image)
+    corners = corner_detection(grid)
 
-        # homography
-        image_homog = apply_homography(raw_image, corners_src=corners)
+    # if display_images_flag:
+    #     plot_corners_original(raw_image, corners)
 
-        # extract digits
-        image_digit_list = extract_digits(image_homog)
+    # homography
+    image_homog = apply_homography(raw_image, corners_src=corners)
 
-        # process digits
-        processed_image_digits = process_digit_images_before_classification(
-            image_digit_list
-        )
+    # extract digits
+    image_digit_list = extract_digits(image_homog)
 
-        # classify digits
-        # classified_digits = classify_image_digits(processed_image_digits, model)
+    # process digits
+    processed_image_digits = process_digit_images_before_classification(
+        image_digit_list
+    )
 
-        # accuracy of puzzle
-        # true_digits = accuracy_reporter.read_true_puzzle_digits(puzzle_solution)
-        # accuracy_reporter.calculate_accuracy(true_digits, classified_digits)
+    # classify digits
+    classified_digits = classify_image_digits(processed_image_digits, model)
+
+    # accuracy of puzzle
+    true_digits = accuracy_reporter.read_true_puzzle_digits(puzzle_solution)
+    accuracy_reporter.calculate_accuracy(true_digits, classified_digits, False)
+
+
+def solve_puzzle_from_image(puzzle_image, model):
+    """Extract, classify and solve a sudoku puzzle from an image, then draw
+    the solved digits on top of the blank cells.
+
+    Arguments:
+        puzzle_image {str} -- path to the puzzle image
+        model {str} -- path to the digit classifier model
+
+    Returns:
+        [np.array] -- image with the solved digits drawn on the blank cells,
+                      or None if no solution was found.
+    """
+
+    raw_image = read_image(puzzle_image)
+    thres_image = apply_threshold(raw_image)
+    grid = find_largest_object(thres_image)
+    corners = corner_detection(grid)
+
+    # homography
+    image_homog = apply_homography(raw_image, corners_src=corners)
+
+    # extract digits
+    image_digit_list = extract_digits(image_homog)
+
+    # process digits
+    processed_image_digits = process_digit_images_before_classification(
+        image_digit_list
+    )
+
+    # classify digits
+    classified_digits = classify_image_digits(processed_image_digits, model)
+
+    # solve puzzle
+    solved_digits = solver.solve_puzzle(classified_digits)
+
+    if solved_digits is None:
+        logging.warning("could not solve puzzle - no solution found.")
+        return None
+
+    solved_image = draw_solution_on_image(image_homog, classified_digits, solved_digits)
+
+    plt.imshow(solved_image)
+    plt.title("solved puzzle")
+    plt.show()
+
+    return solved_image
+
+
+def draw_solution_on_image(image_homog, classified_digits, solved_digits):
+    """Draw the solved digit on top of each cell that was originally blank.
+
+    Arguments:
+        image_homog {np.array} -- straightened grayscale image of the puzzle
+        classified_digits {np.array} -- 9 x 9 grid of digits recognized from
+                                         the image (0 for blank cells)
+        solved_digits {np.array} -- 9 x 9 grid of the solved puzzle
+
+    Returns:
+        [np.array] -- BGR image with the solved digits drawn on blank cells
+    """
+
+    solved_image = cv2.cvtColor(image_homog.astype("uint8"), cv2.COLOR_GRAY2BGR)
+    h, w = image_homog.shape
+    cell_h, cell_w = h / 9, w / 9
+    font_scale = min(cell_h, cell_w) / 40
+
+    for i in range(0, 9):
+        for j in range(0, 9):
+            if int(classified_digits[i][j]) == 0:
+                digit_text = str(int(solved_digits[i][j]))
+                text_size, _ = cv2.getTextSize(
+                    digit_text, cv2.FONT_HERSHEY_SIMPLEX, font_scale, 2
+                )
+                text_x = int((j + 0.5) * cell_w - text_size[0] / 2)
+                text_y = int((i + 0.5) * cell_h + text_size[1] / 2)
+
+                cv2.putText(
+                    solved_image,
+                    digit_text,
+                    (text_x, text_y),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    font_scale,
+                    (0, 0, 255),
+                    2,
+                    cv2.LINE_AA,
+                )
+
+    return solved_image
 
 
 def create_digit_dataset(dataset_path, path_to_digit_folder):
@@ -360,6 +455,9 @@ def corner_detection(image):
 
     # The picture has to be in uint8 format. It was in float64.
     image_contour = image.astype("uint8") * 255
+
+    # ret, image_contour = cv2.threshold(image_contour, 127, 255, 0)
+
 
     contours, _ = cv2.findContours(
         image_contour, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE
