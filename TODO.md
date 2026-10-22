@@ -78,6 +78,15 @@ Running list of outstanding work on SideSolver, gathered while adding
 - [ ] `test/test_puzzle_extractor.py` exists but is empty (1 line) — essentially no
       automated test coverage for the extraction/classification/solving pipeline.
 
+## Product / GUI
+
+- [ ] Build a GUI where a puzzle image can be dropped in and is solved automatically
+      (wraps `solve_puzzle_from_image`/`draw_solution_on_image`, shows the overlay
+      result). Start as a desktop/web drop-target prototype.
+- [ ] Eventually turn this into a mobile app: scan a puzzle with the camera and solve
+      it in-app. Longer-term goal the GUI above should build toward, not a v1
+      requirement.
+
 ## Housekeeping
 
 - [ ] Commit the pending changes: `solver.solve_puzzle`, the
