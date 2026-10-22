@@ -115,12 +115,6 @@ def _fill_in_puzzle(puzzle):
 
     return True
 
-
-def unit_tests(puzzle):
-    v = valid_number(puzzle, 0, 0, 4)
-    assert v is True
-
-
 def pretty_print_puzzle(puzzle):
 
     puzzle = np.asarray(puzzle)

@@ -1,7 +1,6 @@
 # Compare puzzle recognized by classifier to label (puzzle saved in dataset)
 import logging
 import solver
-import numpy as np
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
@@ -10,15 +9,20 @@ logging.getLogger().setLevel(logging.INFO)
 # function to calculate accuracy of entire puzzle
 
 
+def parse_puzzle_file(puzzle_solution: str) -> list[list[str]]:
+    """Parse a single .dat puzzle solution file into a 9 x 9 grid of digit strings."""
+
+    with open(puzzle_solution) as f:
+        return [i.strip().split() for i in f.readlines()[2:]]
+
+
 def read_true_puzzle_digits(puzzle_solution):
 
-    loc = puzzle_solution
-    true_digits = [i.strip().split() for i in open(loc).readlines()[2:]]
+    true_digits = parse_puzzle_file(puzzle_solution)
 
     logging.info("REAL PUZZLE")
     solver.pretty_print_puzzle(true_digits)
     return true_digits
-
 
 
 def calculate_accuracy(true_digits, pred_digits, show_per_digit_stats=True):

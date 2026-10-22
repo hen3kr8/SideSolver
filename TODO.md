@@ -8,19 +8,25 @@ Running list of outstanding work on SideSolver, gathered while adding
 - [x] ~~`digit_classifier.predict_number` returned the raw 0-8 class index instead of the
       1-9 digit~~ (training labels are `folder - 1`). Fixed — now `+ 1`. This was
       causing every non-blank prediction to be off by exactly one.
-- [ ] `corner_detection()` can return `None` when the grid can't be found (see the
-      ratio > 1.4 check). `extract_digits_from_image` and `solve_puzzle_from_image`
-      don't check for this before calling `apply_homography`, so a bad photo will
-      crash instead of failing gracefully. `create_digit_dataset` already guards
-      against this — the two image-processing entry points should do the same.
+- [x] ~~`corner_detection()` can return `None` when the grid can't be found... the
+      two image-processing entry points should do the same~~ Fixed —
+      `extract_digits_from_image` and `solve_puzzle_from_image` now check for
+      `None` corners and bail out with a warning instead of crashing. Also fixed
+      two crashes inside `corner_detection()` itself found while testing this:
+      an empty `contours` list (`contours[0]` → `IndexError`) and a
+      zero-area largest contour (`quad_area / blob_area` → `ZeroDivisionError`)
+      both now return `None` with a warning instead of crashing.
 - [ ] The floodfilling approach used to find the grid (`flood_filling` /
       `find_biggest_blob`) is acknowledged in the README as a temp fix and breaks on
       low quality photos where corners can't be detected cleanly. README says this
       should be replaced with a Hough transform approach.
-- [ ] `digit_classifier.load_model()` has a dead/legacy code path for pickled
-      `.sav` models that raises `RuntimeError` unconditionally on any load failure —
-      effectively unusable. Either fix or remove it along with
-      `models/finalized_model.sav`.
+- [x] ~~`digit_classifier.load_model()` has a dead/legacy code path for pickled
+      `.sav` models...~~ Removed — no caller ever passed a non-`.keras` path, and
+      the legacy pickle format is fundamentally incompatible with the current
+      TensorFlow/Keras version (that was the whole point of the `RuntimeError`),
+      so there was nothing to fix. `load_model()` now just loads `.keras` models,
+      the unused `pickle` import is gone, and `models/finalized_model.sav` was
+      deleted.
 
 ## Performance
 
