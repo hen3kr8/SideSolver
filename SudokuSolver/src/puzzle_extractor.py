@@ -82,6 +82,96 @@ def extract_digits_from_image(puzzle_image: str, puzzle_solution: str, model: st
     accuracy_reporter.calculate_accuracy(true_digits, classified_digits, False)
 
 
+def evaluate_dataset_accuracy(dataset_path: str, model: str) -> dict:
+    """Run extraction + classification (no solving) over every labeled image in
+    dataset_path and report aggregate accuracy, instead of just one fixture image.
+
+    Arguments:
+        dataset_path {str} -- directory of raw labeled puzzle photos (.jpg + .dat pairs)
+        model {str} -- path to the digit classifier model
+
+    Returns:
+        [dict] -- aggregate accuracy stats across the whole dataset
+    """
+
+    data_images = dataset_builder.read_data_images(dataset_path)
+    text_solutions = dataset_builder.read_true_puzzle_digits_from_dir(dataset_path)
+
+    total_correct = 0
+    total_non_blank = 0
+    total_non_blank_correct = 0
+    perfect_puzzles = 0
+    skipped_images = []
+    per_image_accuracy = {}
+
+    image_names = sorted(data_images.keys())
+    for i, image_name in enumerate(image_names, start=1):
+        logging.info("evaluating %s (%d of %d)", image_name, i, len(image_names))
+        raw_image = data_images[image_name]
+
+        thres_image = grid_detection.apply_threshold(raw_image)
+        grid = grid_detection.find_largest_object(thres_image)
+        corners = grid_detection.corner_detection(grid)
+
+        if corners is None:
+            logging.warning("corners not found for %s, skipping", image_name)
+            skipped_images.append(image_name)
+            continue
+
+        image_homog = grid_detection.apply_homography(raw_image, corners_src=corners)
+        image_digit_list = digit_extraction.extract_digits(image_homog)
+        processed_image_digits = digit_extraction.process_digit_images_before_classification(
+            image_digit_list
+        )
+        classified_digits = classify_image_digits(processed_image_digits, model)
+
+        true_flat = [int(d) for row in text_solutions[image_name] for d in row]
+        pred_flat = [int(d) for row in classified_digits for d in row]
+
+        correct = sum(t == p for t, p in zip(true_flat, pred_flat))
+        non_blank = sum(t != 0 for t in true_flat)
+        non_blank_correct = sum(
+            t == p for t, p in zip(true_flat, pred_flat) if t != 0
+        )
+
+        total_correct += correct
+        total_non_blank += non_blank
+        total_non_blank_correct += non_blank_correct
+        if correct == 81:
+            perfect_puzzles += 1
+
+        per_image_accuracy[image_name] = correct / 81.0
+
+    num_evaluated = len(image_names) - len(skipped_images)
+    total_positions = num_evaluated * 81
+
+    results = {
+        "num_images": len(image_names),
+        "num_evaluated": num_evaluated,
+        "num_skipped": len(skipped_images),
+        "skipped_images": skipped_images,
+        "overall_accuracy": total_correct / total_positions if total_positions else 0.0,
+        "non_blank_accuracy": total_non_blank_correct / total_non_blank if total_non_blank else 0.0,
+        "perfect_puzzles": perfect_puzzles,
+        "perfect_puzzle_rate": perfect_puzzles / num_evaluated if num_evaluated else 0.0,
+        "per_image_accuracy": per_image_accuracy,
+    }
+
+    logging.info("=== Full dataset accuracy report (%s) ===", dataset_path)
+    logging.info(
+        "Images: %d total, %d evaluated, %d skipped (no grid detected): %s",
+        results["num_images"], num_evaluated, results["num_skipped"], skipped_images,
+    )
+    logging.info("Overall positional accuracy: %.4f", results["overall_accuracy"])
+    logging.info("Non-blank digit accuracy: %.4f", results["non_blank_accuracy"])
+    logging.info(
+        "Fully-correct puzzles: %d / %d (%.4f)",
+        perfect_puzzles, num_evaluated, results["perfect_puzzle_rate"],
+    )
+
+    return results
+
+
 def solve_puzzle_from_image(puzzle_image: str, model: str):
     """Extract, classify and solve a sudoku puzzle from an image, then draw
     the solved digits on top of the blank cells.
