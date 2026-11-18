@@ -92,10 +92,47 @@ def solve_puzzle(initial_puzzle):
 
     puzzle = np.array(initial_puzzle, dtype=int)
 
+    if not _givens_are_consistent(puzzle):
+        return None
+
     if _fill_in_puzzle(puzzle):
         return puzzle
 
     return None
+
+
+def _givens_are_consistent(puzzle):
+    """Check that the non-blank cells don't already conflict with each other.
+
+    valid_number() only ever runs when placing a *new* digit into a blank
+    cell, so a conflict between two pre-filled givens (e.g. from a
+    misclassified digit) would otherwise never be caught, and the grid would
+    be returned as "solved" unchanged.
+    """
+
+    n = puzzle.shape[0]
+    cell_size = int(n ** 0.5)
+
+    for i in range(n):
+        if not _no_duplicates(puzzle[i, :]):
+            return False
+
+    for j in range(n):
+        if not _no_duplicates(puzzle[:, j]):
+            return False
+
+    for box_row in range(0, n, cell_size):
+        for box_col in range(0, n, cell_size):
+            box = puzzle[box_row:box_row + cell_size, box_col:box_col + cell_size]
+            if not _no_duplicates(box.flatten()):
+                return False
+
+    return True
+
+
+def _no_duplicates(values):
+    non_blank = [v for v in values if v != 0]
+    return len(non_blank) == len(set(non_blank))
 
 
 def _fill_in_puzzle(puzzle):
