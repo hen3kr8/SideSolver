@@ -44,3 +44,21 @@ def test_image1081_solves_end_to_end(image1081_jpg, model_path):
     assert solved_image is not None
     assert isinstance(solved_image, np.ndarray)
     assert solved_image.ndim == 3  # BGR overlay image
+
+
+@pytest.mark.slow
+def test_full_dataset_accuracy_does_not_regress(v2_test_raw_dir, model_path):
+    """Guards the real aggregate accuracy across all of v2_test_raw, not just one
+    fixture image. image1081 alone hit 100%, but that hid two things this catches:
+    corner detection failing on some photos entirely, and blank-cell detection
+    being measurably worse than digit classification itself. Thresholds are set
+    with headroom below the measured baseline so this only fails on an actual
+    regression, not routine noise.
+    """
+
+    results = puzzle_extractor.evaluate_dataset_accuracy(v2_test_raw_dir, model_path)
+
+    assert results["num_skipped"] <= 9
+    assert results["non_blank_accuracy"] >= 0.95
+    assert results["overall_accuracy"] >= 0.90
+    assert results["perfect_puzzle_rate"] >= 0.20

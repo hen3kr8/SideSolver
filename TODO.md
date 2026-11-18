@@ -5,6 +5,14 @@ Running list of outstanding work on SideSolver, gathered while adding
 
 ## Bugs / correctness
 
+- [ ] **New, found while running the full dataset accuracy check:**
+      `is_blank_digit()`'s blank-vs-digit decision is measurably worse than the
+      digit classifier itself — 92.99% overall accuracy on `v2_test_raw` vs.
+      98.68% non-blank-only accuracy, meaning blank cells are where most of the
+      remaining error actually lives. Worth digging into whether the `1/40`
+      floodfill-size threshold (see `is_blank_digit`'s docstring) needs
+      re-tuning now that the digit classifier itself is much more accurate than
+      when that threshold was last set.
 - [x] ~~`solver.solve_puzzle()`/`_fill_in_puzzle()` never validates that the
       *given* (non-blank) cells are mutually consistent...~~ Fixed —
       `solve_puzzle()` now calls `_givens_are_consistent()` first (checks every
@@ -66,10 +74,27 @@ Running list of outstanding work on SideSolver, gathered while adding
 ## ML / accuracy
 
 - [x] Retrained the digit classifier (98.68% test accuracy, see `models/`).
-- [ ] Only verified end-to-end accuracy on a single test image (`image1081`).
-      Should run `extract_digits_from_image`/accuracy reporting across the full
-      `v2_test_raw` set to get a real aggregate accuracy number now that the
-      off-by-one bug is fixed.
+- [x] ~~Only verified end-to-end accuracy on a single test image (`image1081`)...~~
+      Done — added `puzzle_extractor.evaluate_dataset_accuracy()`, which runs
+      extraction + classification (no solving) over every labeled image in a
+      directory and reports aggregate stats. Real numbers across all 40 images
+      in `v2_test_raw`:
+      - **9/40 images (22.5%) skipped** — grid corners couldn't be detected at
+        all. This is the single biggest real-world failure mode, bigger than
+        classifier accuracy, and is exactly the case the Hough-transform rewrite
+        above is meant to fix.
+      - Non-blank digit accuracy: **98.68%** (matches the classifier's own
+        held-out test accuracy — good consistency check).
+      - Overall accuracy including blanks: **92.99%** — *lower* than the
+        non-blank number, meaning `is_blank_digit()` blank-vs-digit detection is
+        actually the weaker link, not the digit classifier itself. New finding,
+        not previously tracked anywhere — worth its own investigation.
+      - Fully-correct puzzles: **7/31 evaluated (22.6%)** — well below the
+        README's earlier 0.9868^25≈71% estimate, because that estimate only
+        accounted for per-digit accuracy and ignored both blank-detection errors
+        and corner-detection failures.
+      Locked in as a regression guard: `test_full_dataset_accuracy_does_not_regress`
+      (`@pytest.mark.slow`) asserts thresholds with headroom below these numbers.
 - [ ] Decide what to do with the now-redundant model files in `models/`:
       `finalized_model_retrained.keras` (duplicate of the new `finalized_model.keras`)
       and `finalized_model_previous_backup.keras` (old model, kept as a rollback
