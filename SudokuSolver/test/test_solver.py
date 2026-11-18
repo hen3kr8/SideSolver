@@ -61,3 +61,30 @@ def test_solve_puzzle_returns_none_when_unsolvable():
     unsolvable[0][0] = 0
 
     assert solver.solve_puzzle(unsolvable) is None
+
+
+def test_solve_puzzle_returns_none_for_conflicting_givens():
+    # fully filled, but two 5s in row 0 -- no blank cells, so the only way to
+    # catch this is by validating the givens themselves up front.
+    conflicting_givens = [row[:] for row in SOLVED_GRID]
+    conflicting_givens[0][1] = 5
+
+    assert solver.solve_puzzle(conflicting_givens) is None
+
+
+def test_solve_puzzle_returns_none_for_conflicting_givens_in_column():
+    # two 5s in column 0, different rows and boxes -- isolates the column check.
+    grid = [[0] * 9 for _ in range(9)]
+    grid[0][0] = 5
+    grid[3][0] = 5
+
+    assert solver.solve_puzzle(grid) is None
+
+
+def test_solve_puzzle_returns_none_for_conflicting_givens_in_box():
+    # two 5s in the top-left box, different rows and columns -- isolates the box check.
+    grid = [[0] * 9 for _ in range(9)]
+    grid[0][0] = 5
+    grid[1][1] = 5
+
+    assert solver.solve_puzzle(grid) is None
