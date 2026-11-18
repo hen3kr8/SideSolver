@@ -53,9 +53,7 @@ def main(
 
 def extract_digits_from_image(puzzle_image: str, puzzle_solution: str, model: str):
     raw_image = grid_detection.read_image(puzzle_image)
-    thres_image = grid_detection.apply_threshold(raw_image)
-    grid = grid_detection.find_largest_object(thres_image)
-    corners = grid_detection.corner_detection(grid)
+    corners = grid_detection.detect_grid_corners(raw_image)
 
     if corners is None:
         logging.warning(
@@ -109,9 +107,7 @@ def evaluate_dataset_accuracy(dataset_path: str, model: str) -> dict:
         logging.info("evaluating %s (%d of %d)", image_name, i, len(image_names))
         raw_image = data_images[image_name]
 
-        thres_image = grid_detection.apply_threshold(raw_image)
-        grid = grid_detection.find_largest_object(thres_image)
-        corners = grid_detection.corner_detection(grid)
+        corners = grid_detection.detect_grid_corners(raw_image)
 
         if corners is None:
             logging.warning("corners not found for %s, skipping", image_name)
@@ -187,9 +183,7 @@ def solve_puzzle_from_image(puzzle_image: str, model: str):
     """
 
     raw_image = grid_detection.read_image(puzzle_image)
-    thres_image = grid_detection.apply_threshold(raw_image)
-    grid = grid_detection.find_largest_object(thres_image)
-    corners = grid_detection.corner_detection(grid)
+    corners = grid_detection.detect_grid_corners(raw_image)
 
     if corners is None:
         logging.warning(
