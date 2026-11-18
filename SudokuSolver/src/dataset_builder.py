@@ -17,9 +17,7 @@ def create_digit_dataset(dataset_path: str, path_to_digit_folder: str):
     counter = 1
     for image_name, raw_image in data_images.items():
 
-        thres_image = grid_detection.apply_threshold(raw_image)
-        grid = grid_detection.find_largest_object(thres_image)
-        corners = grid_detection.corner_detection(grid)
+        corners = grid_detection.detect_grid_corners(raw_image)
 
         if corners is None:
             logging.warning(
