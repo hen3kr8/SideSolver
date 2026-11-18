@@ -62,11 +62,11 @@ Running list of outstanding work on SideSolver, gathered while adding
       file available) without also requiring `puzzle_solution` for the accuracy
       report. Needs its own CLI flag / entry point in `main.py` decoupled from the
       accuracy-report path.
-- [ ] `draw_solution_on_image` + `plt.show()` in `solve_puzzle_from_image` ignore the
-      module's existing `display_images_flag` convention used everywhere else in
-      `puzzle_extractor.py`, and nothing saves the result to disk — so there's no
-      headless-safe output. Should gate the `plt.show()` behind the flag and/or
-      `cv2.imwrite` the overlay image somewhere by default.
+- [x] ~~`draw_solution_on_image` + `plt.show()` in `solve_puzzle_from_image` ignore
+      the module's existing `display_images_flag` convention...~~ Fixed —
+      `plt.show()` is now gated behind `config.display_images_flag`, which is what
+      made it safe to call `solve_puzzle_from_image` from the web app's request
+      handler in the first place.
 
 ## ML / accuracy
 
@@ -123,7 +123,7 @@ Running list of outstanding work on SideSolver, gathered while adding
 
 ## Housekeeping
 
-- [ ] Commit the pending changes: `solver.solve_puzzle`, the
-      `solve_puzzle_from_image`/`draw_solution_on_image` additions, the
-      `predict_number` off-by-one fix, and the README updates — all currently
-      uncommitted on `upgrade_stack`.
+- [x] ~~Commit the pending changes... all currently uncommitted on
+      `upgrade_stack`~~ Done — merged to `master` via PR #34 (squash). `upgrade_stack`
+      and all 13 stale dependabot branches/PRs have since been deleted/closed;
+      `master` is now the only branch.
