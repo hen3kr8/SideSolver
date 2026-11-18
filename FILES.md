@@ -1,0 +1,109 @@
+# Files
+
+What each file in this repo is for. Pure data/image folders are described as a
+whole rather than file-by-file.
+
+## `SudokuSolver/src/` — the application
+
+**Entry points**
+- `main.py` — CLI entry point. Parses `--puzzle_image`/`--puzzle_solution`/`--model`
+  and calls `puzzle_extractor.main()`.
+- `web_app.py` — Flask web GUI. `GET /` serves the upload page; `POST /solve` runs
+  the pipeline on an uploaded photo and returns the solved overlay as a base64 PNG
+  (or a JSON error if the grid couldn't be detected or the puzzle couldn't be solved).
+- `templates/index.html` — the single-page drag-and-drop frontend `web_app.py` serves
+  (inline CSS/JS, no framework).
+
+**Pipeline modules** (in the order an image flows through them)
+- `grid_detection.py` — finds and rectifies the sudoku grid in a raw photo:
+  thresholding, floodfill-based blob detection, corner detection, homography.
+- `digit_extraction.py` — splits a rectified grid image into 81 cell images and
+  cleans each one up (crop, denoise, center, reshape to 32×32) ready for
+  classification.
+- `digit_classifier.py` — the CNN digit classifier: building/training/saving the
+  Keras model (`train_on_processed_digits`), loading it (`load_model`), and running
+  inference on a single digit image (`predict_number`).
+- `solver.py` — the sudoku solver. `solve_puzzle()` is what the pipeline actually
+  calls (plain backtracking, no global state, stops at the first solution).
+  `solve()`/`fill_in()`/`read_puzzle()` are an older, global-state CLI demo path
+  only reachable via `python solver.py` directly — not used by the rest of the
+  codebase, and known to behave incorrectly as a reusable function (see `TODO.md`).
+- `accuracy_reporter.py` — compares classified digits against a ground-truth `.dat`
+  solution and logs accuracy stats. `parse_puzzle_file()` is the shared `.dat`
+  parser also used by `dataset_builder.py`.
+
+**Orchestration & shared config**
+- `puzzle_extractor.py` — ties the above together. `extract_digits_from_image()` is
+  the accuracy-report path (needs a ground-truth `.dat`); `solve_puzzle_from_image()`
+  is the solve-and-overlay path used by the web app; `classify_image_digits()` and
+  `draw_solution_on_image()` are the shared glue between them.
+- `config.py` — the two cross-cutting flags used throughout the pipeline
+  (`display_images_flag`, `debug`), plus the one-time `matplotlib.use("QtAgg")`
+  backend setup that has to happen before any other module imports `pyplot`.
+
+**Offline / one-off**
+- `dataset_builder.py` — offline workflow that turns the raw labeled puzzle photos
+  into the per-digit training/test image folders consumed by `digit_classifier.py`.
+  Only runs when `create_training_set`/`create_test_set` are flipped on in
+  `puzzle_extractor.py`.
+- `vis_blob_vs_corner_quad.py` — standalone debug script, not imported by anything
+  else. Visualizes the blob-vs-quad corner-detection ratio for a few sample images;
+  produces `SudokuSolver/ratio.png`.
+
+**Generated/data**
+- `models/` — serialized Keras models. `finalized_model.keras` is the one the
+  pipeline actually loads; `finalized_model_retrained.keras` and
+  `finalized_model_previous_backup.keras` are a duplicate and a rollback copy left
+  over from the last retraining (see `TODO.md`).
+- `confusion_matrix.png` — output of `digit_classifier.get_accuracy_per_class()`'s
+  confusion matrix plot.
+
+## `SudokuSolver/test/` — the test suite
+
+- `conftest.py` — shared pytest fixtures (`image1081_jpg`, `image1081_dat`,
+  `model_path`), resolved as absolute paths so tests work regardless of the
+  invocation directory.
+- `test_solver.py` — unit tests for `solver.solve_puzzle()`: a real puzzle, an
+  already-solved grid, and a constructed-unsolvable grid.
+- `test_accuracy_reporter.py` — unit tests for `parse_puzzle_file()`/
+  `calculate_accuracy()`.
+- `test_puzzle_extractor.py` — the `image1081` regression tests: asserts the full
+  extraction+classification pipeline still gets 81/81 digits right, plus a
+  `@pytest.mark.slow` test that runs the complete `solve_puzzle_from_image()`
+  end to end.
+- `image1081.jpg` / `image1081.dat` — the fixture puzzle photo and its
+  ground-truth digit grid. Also doubles as `main.py`'s default sample image.
+
+## `SudokuSolver/` — project root
+
+- `pytest.ini` — pytest config: test discovery path, `src` added to `pythonpath`
+  (so the flat `import solver`-style imports work in tests), and the `slow` marker.
+- `data/` — `v2_train_raw`/`v2_test_raw` (raw labeled puzzle photos + `.dat`
+  solutions) and `processed_digits/` (the cropped 32×32 per-digit images
+  `dataset_builder.py` generates from them, sorted into folders `1`–`9`).
+- `sudoku_dataset-master/` (+ `.zip`) — a third-party sudoku image dataset vendored
+  into the repo as additional raw material.
+- `research/`, `sandbox/` — exploratory scratch work, e.g. Hough-transform
+  experiments toward the grid-detection rewrite noted in `TODO.md`.
+- `ratio.png` — output image generated by `vis_blob_vs_corner_quad.py`.
+- `socpar-2014-camera-based-sudoku-recognition-with-deep-belief-network.pdf` —
+  reference paper; the classifier's accuracy numbers in `README.md` are compared
+  against it.
+
+## Repo root
+
+- `README.md` — project overview plus a running dev log of issues found and fixed
+  over the project's history.
+- `TODO.md` — the current outstanding-work list.
+- `FILES.md` — this file.
+- `requirements.txt` — pinned Python dependencies installed into
+  `SudokuSolver/.venv`.
+- `archive/requirements.txt` — an older, superseded requirements file kept for
+  reference.
+- `progress/` — screenshots plus `interesting_notes.txt`, a dev log of visual
+  debugging artifacts and notes from building the CV pipeline.
+- `.circleci/config.yml`, `.flake8`, `.pre-commit-config.yaml`, `.toml` — legacy
+  CI/lint/format config (CircleCI job targets Python 3.7, `black` pre-commit hook
+  pinned to an old revision). These predate the current `.venv`/`pytest` setup and
+  don't appear to be part of the active workflow — nothing in this session touched
+  them, and they weren't verified to still run cleanly.

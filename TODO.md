@@ -5,6 +5,19 @@ Running list of outstanding work on SideSolver, gathered while adding
 
 ## Bugs / correctness
 
+- [ ] **New, found while writing tests:** `solver.solve_puzzle()`/`_fill_in_puzzle()`
+      never validates that the *given* (non-blank) cells are mutually consistent —
+      `valid_number()` is only ever called when placing a *new* digit into a blank
+      cell, never to re-check cells that came in pre-filled. Concretely: a grid
+      with zero blank cells and a duplicate digit in some row is returned as-is,
+      reported as solved, instead of `None`. This matters for this project
+      specifically because misclassified digits from a photo are exactly the kind
+      of input that could produce a self-contradictory set of givens — right now
+      that would silently produce a wrong "solved" overlay instead of failing
+      loudly. Fix: validate the givens (no repeated non-zero digit in any row/
+      column/box) at the top of `solve_puzzle()` and return `None` immediately if
+      they're inconsistent, before attempting to fill anything.
+
 - [x] ~~`digit_classifier.predict_number` returned the raw 0-8 class index instead of the
       1-9 digit~~ (training labels are `folder - 1`). Fixed — now `+ 1`. This was
       causing every non-blank prediction to be off by exactly one.
@@ -75,14 +88,35 @@ Running list of outstanding work on SideSolver, gathered while adding
       `uv python install 3.11` + relinking, but this will bite again on a fresh
       clone/machine. Worth documenting proper venv setup (or re-pinning via
       `uv`/`requirements.txt`) so this is reproducible.
-- [ ] `test/test_puzzle_extractor.py` exists but is empty (1 line) — essentially no
-      automated test coverage for the extraction/classification/solving pipeline.
+- [x] ~~`test/test_puzzle_extractor.py` exists but is empty... no automated test
+      coverage~~ Fixed — basic `pytest` suite added: `SudokuSolver/pytest.ini` +
+      `test/conftest.py` (fixture paths, `pythonpath = src` so the flat
+      `import solver` style works), `test/test_solver.py` (unit tests for
+      `solve_puzzle`: real puzzle, already-solved grid, unsolvable grid),
+      `test/test_accuracy_reporter.py` (unit tests for `parse_puzzle_file`/
+      `calculate_accuracy`), and `test/test_puzzle_extractor.py` (the
+      `image1081` regression test — asserts 81/81 classification accuracy, plus
+      a `@pytest.mark.slow`-marked full `solve_puzzle_from_image` end-to-end
+      test). `pytest` passes (8 tests); `pytest -m "not slow"` runs the fast
+      ones only (~20s vs ~45s). Added `pytest==9.1.1` to `requirements.txt`.
 
 ## Product / GUI
 
-- [ ] Build a GUI where a puzzle image can be dropped in and is solved automatically
-      (wraps `solve_puzzle_from_image`/`draw_solution_on_image`, shows the overlay
-      result). Start as a desktop/web drop-target prototype.
+- [x] Build a GUI where a puzzle image can be dropped in and is solved automatically.
+      Built as a Flask web app: `SudokuSolver/src/web_app.py` +
+      `SudokuSolver/src/templates/index.html`. Drag-and-drop or click-to-browse a
+      photo, it POSTs to `/solve` which calls `puzzle_extractor.solve_puzzle_from_image`
+      and returns the overlay image as base64 PNG. Verified end-to-end (success,
+      no-grid-detected, no-file, wrong-file-type all return the right response).
+      Run with `python web_app.py` from `SudokuSolver/src` and open
+      `http://127.0.0.1:5000`.
+    - [ ] Follow-up: the digit classifier model is reloaded from disk on every
+          `/solve` request (`classify_image_digits` calls `digit_classifier.load_model`
+          each time). Fine for a prototype; should load once at app startup and reuse
+          it if this gets real traffic.
+    - [ ] Follow-up: solver is still the naive ~24s backtracking from the Performance
+          section above — the UI just shows a "this can take up to 30s" spinner
+          around it rather than fixing the underlying slowness.
 - [ ] Eventually turn this into a mobile app: scan a puzzle with the camera and solve
       it in-app. Longer-term goal the GUI above should build toward, not a v1
       requirement.

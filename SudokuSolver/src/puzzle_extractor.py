@@ -130,9 +130,10 @@ def solve_puzzle_from_image(puzzle_image: str, model: str):
 
     solved_image = draw_solution_on_image(image_homog, classified_digits, solved_digits)
 
-    plt.imshow(solved_image)
-    plt.title("solved puzzle")
-    plt.show()
+    if config.display_images_flag:
+        plt.imshow(solved_image)
+        plt.title("solved puzzle")
+        plt.show()
 
     return solved_image
 
