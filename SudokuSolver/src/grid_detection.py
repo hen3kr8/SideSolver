@@ -1,5 +1,6 @@
 import logging
 import operator
+import statistics
 
 import config
 import cv2
@@ -461,6 +462,15 @@ def _longest_regular_hough_run(lines_with_position: list, tolerance: float = 0.3
     unit) while rejecting a stray line elsewhere in the photo (e.g. a page
     edge or header text) whose position doesn't fit the grid's regular
     spacing at all.
+
+    The base unit is the *median* gap, not the minimum. A single spurious
+    near-duplicate line close to the border (one _merge_nearby_hough_lines
+    didn't quite catch) produces one anomalously small gap; using that as
+    the base unit corrupts the multiple-of-base-unit check for every other
+    gap and throws away most of the real grid lines (confirmed on image50/
+    image32: min-based base unit kept only 4-8 of the 10-12 detected lines,
+    median-based kept 9-11). The median is far more robust to one outlier
+    since real grids have many same-sized gaps and at most a few 2x/3x ones.
     """
     if len(lines_with_position) < 3:
         return lines_with_position
@@ -468,7 +478,7 @@ def _longest_regular_hough_run(lines_with_position: list, tolerance: float = 0.3
     lines_with_position = sorted(lines_with_position, key=lambda item: item[1])
     positions = [position for _, position in lines_with_position]
     gaps = [positions[i + 1] - positions[i] for i in range(len(positions) - 1)]
-    base_unit = min(gaps)
+    base_unit = statistics.median(gaps)
 
     def is_valid_multiple(gap: float, max_multiple: int = 3) -> bool:
         if base_unit <= 0:

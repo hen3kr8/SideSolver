@@ -56,11 +56,29 @@ Running list of outstanding work on SideSolver, gathered while adding
         solve this puzzle" — same practical outcome for the user today, but
         now exercising far more of the pipeline, and a few images that were
         previously skipped for fixable reasons (not genuinely bad photos) may
-        now succeed. The regularly-spaced-line heuristic
-        (`_longest_regular_hough_run`) is the main thing worth improving
-        further if better alignment precision is wanted.
+        now succeed.
       - Test thresholds in `test_full_dataset_accuracy_does_not_regress`
         updated to the new measured baseline (with headroom).
+      - **Follow-up fix:** diagnosed *why* alignment was imprecise by looking
+        at which rows/columns the misclassifications concentrated in — top
+        and bottom rows were far worse (22%/3% accuracy) than the middle
+        (65-78%), pointing at the top/bottom boundary lines specifically.
+        Traced it to `_longest_regular_hough_run` using `min(gaps)` as the
+        grid-cell-size base unit: one spurious near-duplicate line near a
+        border (confirmed directly on `image50`'s and `image32`'s detected
+        line positions) produces one anomalously small gap, and using that
+        as the base unit corrupts the multiple-of-base-unit check for every
+        other gap, discarding most of the real grid lines. Switched to
+        `median(gaps)`, which is robust to that one outlier. Measured effect:
+        `num_skipped` **1 → 0** (the last skipped image, `image51`, is now
+        recovered too), 3 of the other rescued images improved (`image32`
+        34.6%→55.6%, `image50` 35.8%→49.4%, `image35` 48.1%→51.9%), none
+        regressed. Aggregate accuracy stayed about the same only because
+        `image51` (newly included, moderate accuracy) entered the pool.
+      - Remaining gap: the other 5 rescued images are unchanged by this fix,
+        so there's likely at least one more distinct alignment issue beyond
+        the base-unit bug — worth another look if coverage on these specific
+        images matters.
 - [x] ~~`digit_classifier.load_model()` has a dead/legacy code path for pickled
       `.sav` models...~~ Removed — no caller ever passed a non-`.keras` path, and
       the legacy pickle format is fundamentally incompatible with the current

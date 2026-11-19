@@ -56,18 +56,28 @@ def test_full_dataset_accuracy_does_not_regress(v2_test_raw_dir, model_path):
     regression, not routine noise.
 
     The Hough fallback in detect_grid_corners() traded some of these numbers
-    for far fewer skipped images: num_skipped dropped from 9 to 1, but
-    non_blank_accuracy and overall_accuracy dropped too (0.9868 -> 0.80,
-    0.9299 -> 0.84), because the rescued images are often imprecisely
-    aligned. Verified separately that none of them produce a wrong "solved"
-    result -- they all fail safely via solve_puzzle_from_image() returning
-    None -- so this is a real but contained trade-off, not a silent
-    correctness regression.
+    for far fewer skipped images: num_skipped dropped from 9 to 1 (then to 0
+    after fixing _longest_regular_hough_run's base-unit calculation - see
+    below), but non_blank_accuracy and overall_accuracy dropped too (0.9868
+    -> 0.78, 0.9299 -> 0.84), because the rescued images are often
+    imprecisely aligned. Verified separately that none of them produce a
+    wrong "solved" result -- they all fail safely via
+    solve_puzzle_from_image() returning None -- so this is a real but
+    contained trade-off, not a silent correctness regression.
+
+    _longest_regular_hough_run used min(gaps) as the base grid-cell-size
+    unit, which a single spurious near-duplicate line near a border (one
+    gap anomalously small) would corrupt, throwing out most of the real
+    grid lines (confirmed on image50/image32). Switched to median(gaps),
+    which recovers the real lines instead. Net effect: num_skipped 1 -> 0
+    (image51 recovered), 3 of the other rescued images improved, none
+    regressed. Aggregate accuracy stayed about the same only because
+    image51 (newly included, moderate accuracy) entered the pool.
     """
 
     results = puzzle_extractor.evaluate_dataset_accuracy(v2_test_raw_dir, model_path)
 
-    assert results["num_skipped"] <= 3
-    assert results["non_blank_accuracy"] >= 0.75
-    assert results["overall_accuracy"] >= 0.78
-    assert results["perfect_puzzle_rate"] >= 0.15
+    assert results["num_skipped"] <= 1
+    assert results["non_blank_accuracy"] >= 0.73
+    assert results["overall_accuracy"] >= 0.80
+    assert results["perfect_puzzle_rate"] >= 0.14
