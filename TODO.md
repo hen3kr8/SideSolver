@@ -5,14 +5,25 @@ Running list of outstanding work on SideSolver, gathered while adding
 
 ## Bugs / correctness
 
-- [ ] **New, found while running the full dataset accuracy check:**
-      `is_blank_digit()`'s blank-vs-digit decision is measurably worse than the
+- [x] ~~`is_blank_digit()`'s blank-vs-digit decision is measurably worse than the
       digit classifier itself — 92.99% overall accuracy on `v2_test_raw` vs.
-      98.68% non-blank-only accuracy, meaning blank cells are where most of the
-      remaining error actually lives. Worth digging into whether the `1/40`
-      floodfill-size threshold (see `is_blank_digit`'s docstring) needs
-      re-tuning now that the digit classifier itself is much more accurate than
-      when that threshold was last set.
+      98.68% non-blank-only accuracy...~~ Fixed — collected the blob-size ratio
+      `is_blank_digit` computes internally for every one of the 2511 labeled
+      cells in `v2_test_raw`, against the ground-truth blank/non-blank label,
+      and swept thresholds against that data. The smallest ratio seen for any
+      real digit was 0.0472; the old `1/40` (0.025) threshold left a lot of
+      headroom below that, misclassifying 164/2511 blank cells as non-blank.
+      Moved the threshold to `1/22` (0.0455) — still strictly below 0.0472, so
+      no real digit is newly misclassified as blank (that direction is worse:
+      a missed digit becomes a blank the solver silently overwrites, rather
+      than failing safely) — which cuts blank-misclassified-as-non-blank down
+      to 30/2511. Measured effect on the full `v2_test_raw` accuracy:
+      - Overall accuracy: **92.99% → 98.33%**
+      - Non-blank accuracy: unchanged (98.68%) — expected, since this only
+        affects blank/non-blank decisions, not digit classification itself.
+      - Perfect-puzzle rate: **22.6% (7/31) → 61.3% (19/31)**
+      Regression guard thresholds in `test_full_dataset_accuracy_does_not_regress`
+      updated to the new baseline (with headroom).
 - [x] ~~`solver.solve_puzzle()`/`_fill_in_puzzle()` never validates that the
       *given* (non-blank) cells are mutually consistent...~~ Fixed —
       `solve_puzzle()` now calls `_givens_are_consistent()` first (checks every

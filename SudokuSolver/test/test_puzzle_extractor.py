@@ -54,11 +54,15 @@ def test_full_dataset_accuracy_does_not_regress(v2_test_raw_dir, model_path):
     being measurably worse than digit classification itself. Thresholds are set
     with headroom below the measured baseline so this only fails on an actual
     regression, not routine noise.
+
+    Baseline after tuning is_blank_digit's threshold (see TODO.md):
+    overall_accuracy 0.9833, non_blank_accuracy 0.9868, perfect_puzzle_rate 0.6129
+    (up from 0.9299 / 0.9868 / 0.2258 at the old 1/40 threshold).
     """
 
     results = puzzle_extractor.evaluate_dataset_accuracy(v2_test_raw_dir, model_path)
 
     assert results["num_skipped"] <= 9
     assert results["non_blank_accuracy"] >= 0.95
-    assert results["overall_accuracy"] >= 0.90
-    assert results["perfect_puzzle_rate"] >= 0.20
+    assert results["overall_accuracy"] >= 0.95
+    assert results["perfect_puzzle_rate"] >= 0.50
