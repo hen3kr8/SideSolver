@@ -79,34 +79,21 @@ def find_largest_object(image: np.ndarray):
 
 
 def flood_filling(image: np.ndarray):
-    # TODO(fix): fix exception, find better (more efficient) way to apply
-    # floodfilling.
-    # Returns all islands of pixels, where all islands have different numbers.
+    """Label each 4-connected island of white (255) pixels in `image` with
+    a unique positive integer; 0 is background. Callers (find_biggest_blob,
+    digit_extraction.is_blank_digit) only ever use this to count pixels per
+    island via np.unique, so any labeling with that same 0=background /
+    distinct-id-per-island contract is a valid drop-in.
 
-    h, w = image.shape
-    new_image = np.zeros((h, w))
-    counter = 0
-    s = []
+    Previously a hand-rolled BFS over every pixel in pure Python. Replaced
+    with cv2.connectedComponents, which does the identical 4-connected
+    labeling in native code and is dramatically faster on real images.
+    """
 
-    for i in range(1, h - 1):
-        for j in range(1, w - 1):
+    binary_image = np.where(image == 255, 255, 0).astype(np.uint8)
+    _, labels = cv2.connectedComponents(binary_image, connectivity=4)
 
-            if image[i, j] == 255 and new_image[i, j] == 0:
-                counter += 1
-                new_image[i, j] = counter
-                search(i, j, s, h, w)
-
-                while len(s) > 0:
-                    x, y = s.pop()
-                    try:
-                        if image[x, y] == 255 and new_image[x, y] == 0:
-                            new_image[x, y] = counter
-                            search(x, y, s, h, w)
-
-                    except IndexError:
-                        pass
-
-    return new_image
+    return labels.astype(np.float64)
 
 
 def find_biggest_blob(new_image: np.ndarray, largest_island: int = 2):
@@ -151,13 +138,6 @@ def find_biggest_blob(new_image: np.ndarray, largest_island: int = 2):
 
 
     # return new_image
-
-
-def search(i: int, j: int, s: list[tuple[int, int]], h: int, w: int):
-    if i > 0:     s.append((i - 1, j))
-    if i < h - 1: s.append((i + 1, j))
-    if j < w - 1: s.append((i, j + 1))
-    if j > 0:     s.append((i, j - 1))
 
 
 def corner_detection(image: np.ndarray):
