@@ -7,6 +7,18 @@ A CNN digit classifier is trained on sudoku digits from sudoku puzzles. (Initial
 
 A puzzle is loaded, the puzzle grid is extracted. The digits are isolated and sent to the classifier.
 
+## Setup
+
+Uses [uv](https://docs.astral.sh/uv/) to manage the Python version and virtualenv, pinned via `.python-version` so a fresh clone doesn't depend on whatever Python happens to already be on `PATH`. From `SudokuSolver/`:
+
+```bash
+uv python install 3.11
+uv venv --python 3.11 .venv
+uv pip install --python .venv/bin/python -r ../requirements.txt
+```
+
+Run the test suite with `.venv/bin/python -m pytest` (see `SudokuSolver/pytest.ini` and `SudokuSolver/test/`).
+
 ### Some progress:
 
 

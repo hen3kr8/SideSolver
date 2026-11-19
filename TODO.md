@@ -102,12 +102,13 @@ Running list of outstanding work on SideSolver, gathered while adding
 
 ## Dev environment
 
-- [ ] `SudokuSolver/.venv` had a broken `python3` symlink pointing at a path that
-      only existed on the machine it was created on (site-packages were intact,
-      just the interpreter symlink was dead). Fixed for this session via
-      `uv python install 3.11` + relinking, but this will bite again on a fresh
-      clone/machine. Worth documenting proper venv setup (or re-pinning via
-      `uv`/`requirements.txt`) so this is reproducible.
+- [x] ~~`SudokuSolver/.venv` had a broken `python3` symlink pointing at a path
+      that only existed on the machine it was created on... Worth documenting
+      proper venv setup so this is reproducible.~~ Fixed — added a root-level
+      `.python-version` (pins `3.11`) and a "Setup" section in `README.md` with
+      the exact `uv python install` / `uv venv` / `uv pip install` commands,
+      verified end-to-end against a scratch copy of `requirements.txt` before
+      writing them down.
 - [x] ~~`test/test_puzzle_extractor.py` exists but is empty... no automated test
       coverage~~ Fixed — basic `pytest` suite added: `SudokuSolver/pytest.ini` +
       `test/conftest.py` (fixture paths, `pythonpath = src` so the flat
