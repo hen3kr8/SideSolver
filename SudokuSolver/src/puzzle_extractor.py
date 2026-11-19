@@ -47,19 +47,38 @@ def main(
     else:
 
         logging.info("skipping digit dataset creation")
-        extract_digits_from_image(puzzle_image, puzzle_solution, model)
-        solve_puzzle_from_image(puzzle_image, model)
+
+        # Extract and classify once, and reuse the result for both the
+        # accuracy report and solving, instead of running the whole
+        # extraction + classification pipeline twice (previously each of
+        # the two calls below re-did it independently, including reloading
+        # the classifier model a second time).
+        image_homog, classified_digits = _extract_and_classify(puzzle_image, model)
+
+        if classified_digits is None:
+            logging.warning(
+                "corners could not be detected for %s, skipping this image", puzzle_image
+            )
+            return
+
+        _report_accuracy(classified_digits, puzzle_solution)
+        _solve_and_draw(image_homog, classified_digits)
 
 
-def extract_digits_from_image(puzzle_image: str, puzzle_solution: str, model: str):
+def _extract_and_classify(puzzle_image: str, model: str):
+    """Run grid detection, homography, digit extraction and classification
+    for a puzzle image.
+
+    Returns:
+        (image_homog, classified_digits), or (None, None) if the grid
+        corners could not be detected.
+    """
+
     raw_image = grid_detection.read_image(puzzle_image)
     corners = grid_detection.detect_grid_corners(raw_image)
 
     if corners is None:
-        logging.warning(
-            "corners could not be detected for %s, skipping this image", puzzle_image
-        )
-        return
+        return None, None
 
     # homography
     image_homog = grid_detection.apply_homography(raw_image, corners_src=corners)
@@ -75,9 +94,24 @@ def extract_digits_from_image(puzzle_image: str, puzzle_solution: str, model: st
     # classify digits
     classified_digits = classify_image_digits(processed_image_digits, model)
 
-    # accuracy of puzzle
+    return image_homog, classified_digits
+
+
+def _report_accuracy(classified_digits: np.ndarray, puzzle_solution: str):
     true_digits = accuracy_reporter.read_true_puzzle_digits(puzzle_solution)
     accuracy_reporter.calculate_accuracy(true_digits, classified_digits, False)
+
+
+def extract_digits_from_image(puzzle_image: str, puzzle_solution: str, model: str):
+    _, classified_digits = _extract_and_classify(puzzle_image, model)
+
+    if classified_digits is None:
+        logging.warning(
+            "corners could not be detected for %s, skipping this image", puzzle_image
+        )
+        return
+
+    _report_accuracy(classified_digits, puzzle_solution)
 
 
 def evaluate_dataset_accuracy(dataset_path: str, model: str) -> dict:
@@ -182,30 +216,23 @@ def solve_puzzle_from_image(puzzle_image: str, model: str):
                       no solution was found.
     """
 
-    raw_image = grid_detection.read_image(puzzle_image)
-    corners = grid_detection.detect_grid_corners(raw_image)
+    image_homog, classified_digits = _extract_and_classify(puzzle_image, model)
 
-    if corners is None:
+    if classified_digits is None:
         logging.warning(
             "corners could not be detected for %s, cannot solve this image", puzzle_image
         )
         return None
 
-    # homography
-    image_homog = grid_detection.apply_homography(raw_image, corners_src=corners)
+    return _solve_and_draw(image_homog, classified_digits)
 
-    # extract digits
-    image_digit_list = digit_extraction.extract_digits(image_homog)
 
-    # process digits
-    processed_image_digits = digit_extraction.process_digit_images_before_classification(
-        image_digit_list
-    )
+def _solve_and_draw(image_homog: np.ndarray, classified_digits: np.ndarray):
+    """Solve an already-classified puzzle and draw the solution on top of
+    the blank cells. Returns the solved image, or None if no solution
+    was found.
+    """
 
-    # classify digits
-    classified_digits = classify_image_digits(processed_image_digits, model)
-
-    # solve puzzle
     solved_digits = solver.solve_puzzle(classified_digits)
 
     if solved_digits is None:
