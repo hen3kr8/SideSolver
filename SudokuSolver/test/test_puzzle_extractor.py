@@ -73,14 +73,17 @@ def test_full_dataset_accuracy_does_not_regress(v2_test_raw_dir, model_path):
     regressed.
 
     Separately, is_blank_digit's threshold was tuned from 1/40 to 1/22 (see
-    TODO.md) -- raises non_blank_accuracy and overall_accuracy on top of the
-    Hough changes above. Thresholds below reflect both fixes combined,
-    measured together on the full v2_test_raw set.
+    TODO.md) -- raises overall_accuracy and perfect_puzzle_rate on top of the
+    Hough changes above (non_blank_accuracy is untouched by that fix, since
+    it only affects blank-vs-digit decisions). Measured with both fixes
+    together on the full v2_test_raw set: num_skipped 0, non_blank_accuracy
+    0.7751, overall_accuracy 0.8821, perfect_puzzle_rate 0.475. Thresholds
+    below keep headroom under those numbers.
     """
 
     results = puzzle_extractor.evaluate_dataset_accuracy(v2_test_raw_dir, model_path)
 
     assert results["num_skipped"] <= 1
     assert results["non_blank_accuracy"] >= 0.73
-    assert results["overall_accuracy"] >= 0.80
-    assert results["perfect_puzzle_rate"] >= 0.14
+    assert results["overall_accuracy"] >= 0.84
+    assert results["perfect_puzzle_rate"] >= 0.40
