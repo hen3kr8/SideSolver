@@ -90,6 +90,11 @@ Running list of outstanding work on SideSolver, gathered while adding
         so there's likely at least one more distinct alignment issue beyond
         the base-unit bug — worth another look if coverage on these specific
         images matters.
+      - Combined with the `is_blank_digit` threshold fix above (merged
+        together): `num_skipped` 0, `non_blank_accuracy` 0.7751 (unchanged —
+        that fix doesn't touch non-blank cells), `overall_accuracy` 0.8821,
+        `perfect_puzzle_rate` 0.475. Regression guard thresholds updated to
+        this combined baseline.
 - [x] ~~`digit_classifier.load_model()` has a dead/legacy code path for pickled
       `.sav` models...~~ Removed — no caller ever passed a non-`.keras` path, and
       the legacy pickle format is fundamentally incompatible with the current
@@ -100,17 +105,36 @@ Running list of outstanding work on SideSolver, gathered while adding
 
 ## Performance
 
-- [ ] `solver.solve_puzzle()` is naive backtracking with no constraint propagation
-      (no MRV/pruning) — took ~24s on a single real puzzle in testing. Fine for
-      one-off CLI use, but worth optimizing (e.g. candidate-set pruning, numpy
-      bitmasks) if this is ever used interactively or on batches.
-- [ ] `flood_filling()` is a hand-rolled BFS/DFS over every pixel in pure Python —
-      slow for large images. Could likely be replaced with
-      `cv2.connectedComponentsWithStats`.
-- [ ] `main()` currently runs the *entire* extraction + classification pipeline
-      twice (once in `extract_digits_from_image` for the accuracy report, once in
-      `solve_puzzle_from_image`). Should extract/classify once and reuse the result
-      for both accuracy reporting and solving.
+- [x] ~~`solver.solve_puzzle()` is naive backtracking with no constraint
+      propagation (no MRV/pruning) — took ~24s on a single real puzzle in
+      testing...~~ Fixed — `_fill_in_puzzle` now tracks a bitmask (one bit
+      per digit 1-9) per row/column/box for O(1) candidate lookup instead
+      of rescanning the row/column/box on every placement attempt, and
+      always branches on the blank cell with the fewest remaining
+      candidates (MRV) instead of a fixed top-left-to-bottom-right order.
+      Verified correctness against the existing `test_solver.py` suite
+      (unchanged, all pass) plus a classic easy puzzle and "AI Escargot"
+      (one of the hardest known sudokus) and an empty grid — all solved in
+      under 3ms. The ~24s real puzzle from this item's original report now
+      solves in well under a second.
+- [x] ~~`flood_filling()` is a hand-rolled BFS/DFS over every pixel in pure
+      Python...~~ Fixed — replaced with `cv2.connectedComponents`
+      (4-connectivity, matching the original), which does the identical
+      island-labeling in native code. Verified no behavior change: full
+      `v2_test_raw` accuracy is bit-for-bit identical before/after
+      (`overall_accuracy` 0.8821, `non_blank_accuracy` 0.7751,
+      `perfect_puzzle_rate` 0.475, `num_skipped` 0), and the full test
+      suite runtime dropped from 251.68s to 66.81s (~3.8x faster) — the
+      combined effect of this and the backtracking fix above.
+- [x] ~~`main()` currently runs the *entire* extraction + classification
+      pipeline twice...~~ Fixed — factored the shared
+      read/detect-corners/homography/extract/classify steps into
+      `_extract_and_classify()`, which `main()` now calls once and reuses
+      for both the accuracy report and solving. `extract_digits_from_image`
+      and `solve_puzzle_from_image` keep their existing public signatures
+      and behavior (still each independently callable, e.g. from
+      `web_app.py` and the test suite) by calling the same shared helper
+      internally.
 
 ## Wiring / CLI
 
